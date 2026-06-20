@@ -15,8 +15,8 @@ import {
 } from '@phosphor-icons/react';
 
 interface DomainStepProps {
-  values: DomainType[];
-  onChange: (values: DomainType[]) => void;
+  value: DomainType | null;
+  onChange: (value: DomainType) => void;
 }
 
 const domainIcons: Record<DomainType, React.ReactElement> = {
@@ -32,13 +32,9 @@ const domainIcons: Record<DomainType, React.ReactElement> = {
   food: <ForkKnife />,
 };
 
-export function DomainStep({ values, onChange }: DomainStepProps) {
-  const handleToggle = (domain: DomainType) => {
-    if (values.includes(domain)) {
-      onChange(values.filter((v) => v !== domain));
-    } else {
-      onChange([...values, domain]);
-    }
+export function DomainStep({ value, onChange }: DomainStepProps) {
+  const handleSelect = (domain: DomainType) => {
+    onChange(domain);
   };
 
   return (
@@ -46,7 +42,7 @@ export function DomainStep({ values, onChange }: DomainStepProps) {
       <div className="space-y-3">
         <h2 className="text-3xl md:text-4xl font-bold">Select Your Domain</h2>
         <p className="text-lg text-muted-foreground">
-          Choose one or more industries for your product
+          Choose the primary industry for your product
         </p>
       </div>
 
@@ -54,8 +50,8 @@ export function DomainStep({ values, onChange }: DomainStepProps) {
         {DOMAINS.map((domain) => (
           <SelectionCard
             key={domain.value}
-            selected={values.includes(domain.value)}
-            onClick={() => handleToggle(domain.value)}
+            selected={value === domain.value}
+            onClick={() => handleSelect(domain.value)}
             icon={domainIcons[domain.value]}
             label={domain.label}
             description={domain.description}

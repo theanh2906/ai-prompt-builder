@@ -40,7 +40,7 @@ export interface Feature {
 
 export interface ProjectRequirements {
   platform: PlatformType | null;
-  domains: DomainType[];
+  domain: DomainType | null;
   features: string[];
   designStyle: DesignStyle | null;
   colorMood: ColorMood | null;

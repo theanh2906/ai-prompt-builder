@@ -19,24 +19,21 @@ export function generatePrompt(requirements: ProjectRequirements): string {
     sections.push('');
   }
 
-  if (requirements.domains && requirements.domains.length > 0) {
+  if (requirements.domain) {
     sections.push('## Domain & Industry');
-    sections.push('This application serves the following domains:');
-    requirements.domains.forEach((domain) => {
-      const domainMap: Record<string, string> = {
-        'finance': 'Finance - Financial services, banking, investing, or budgeting',
-        'healthcare': 'Healthcare - Medical services, patient management, or health tracking',
-        'ecommerce': 'E-commerce - Online shopping, product catalog, or marketplace',
-        'education': 'Education - Learning management, courses, or educational content',
-        'management': 'Management - Project management, task tracking, or workflow automation',
-        'social': 'Social - Social networking, community building, or collaboration',
-        'entertainment': 'Entertainment - Media streaming, gaming, or content discovery',
-        'productivity': 'Productivity - Tools for efficiency, organization, or time management',
-        'travel': 'Travel - Trip planning, booking, or travel information',
-        'food': 'Food & Beverage - Recipes, restaurant discovery, or food ordering',
-      };
-      sections.push(`- ${domainMap[domain] || domain}`);
-    });
+    const domainMap: Record<string, string> = {
+      'finance': 'Finance - Financial services, banking, investing, or budgeting',
+      'healthcare': 'Healthcare - Medical services, patient management, or health tracking',
+      'ecommerce': 'E-commerce - Online shopping, product catalog, or marketplace',
+      'education': 'Education - Learning management, courses, or educational content',
+      'management': 'Management - Project management, task tracking, or workflow automation',
+      'social': 'Social - Social networking, community building, or collaboration',
+      'entertainment': 'Entertainment - Media streaming, gaming, or content discovery',
+      'productivity': 'Productivity - Tools for efficiency, organization, or time management',
+      'travel': 'Travel - Trip planning, booking, or travel information',
+      'food': 'Food & Beverage - Recipes, restaurant discovery, or food ordering',
+    };
+    sections.push(domainMap[requirements.domain] || requirements.domain);
     sections.push('');
   }
 

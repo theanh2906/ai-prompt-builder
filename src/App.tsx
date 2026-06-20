@@ -26,7 +26,7 @@ function App() {
   
   const [requirements, setRequirements] = useState<ProjectRequirements>({
     platform: null,
-    domains: [],
+    domain: null,
     features: [],
     designStyle: null,
     colorMood: null,
@@ -82,7 +82,7 @@ function App() {
       case 1:
         return requirements.platform !== null;
       case 2:
-        return requirements.domains.length > 0;
+        return requirements.domain !== null;
       case 3:
         return requirements.features.length > 0;
       case 4:
@@ -190,14 +190,15 @@ function App() {
                 )}
                 {currentStep === 2 && (
                   <DomainStep
-                    values={requirements.domains}
-                    onChange={(domains: DomainType[]) => setRequirements({ ...requirements, domains })}
+                    value={requirements.domain}
+                    onChange={(domain: DomainType) => setRequirements({ ...requirements, domain })}
                   />
                 )}
                 {currentStep === 3 && (
                   <FeaturesStep
                     values={requirements.features}
                     onChange={(features: string[]) => setRequirements({ ...requirements, features })}
+                    selectedDomain={requirements.domain}
                   />
                 )}
                 {currentStep === 4 && (
@@ -239,14 +240,8 @@ function App() {
                           <p className="text-muted-foreground capitalize">{requirements.platform}</p>
                         </div>
                         <div>
-                          <h3 className="font-semibold mb-2">Domains</h3>
-                          <div className="flex flex-wrap gap-2">
-                            {requirements.domains.map((domain) => (
-                              <span key={domain} className="px-3 py-1 bg-primary/10 text-primary rounded-md text-sm">
-                                {domain}
-                              </span>
-                            ))}
-                          </div>
+                          <h3 className="font-semibold mb-2">Domain</h3>
+                          <p className="text-muted-foreground capitalize">{requirements.domain}</p>
                         </div>
                         <div>
                           <h3 className="font-semibold mb-2">Features ({requirements.features.length})</h3>

@@ -13,12 +13,8 @@ interface SummaryStepProps {
 
 export function SummaryStep({ requirements, onEdit, onGenerate }: SummaryStepProps) {
   const platformLabel = PLATFORMS.find((p) => p.value === requirements.platform)?.label;
-  const domainLabels = requirements.domains.map(
-    (d) => DOMAINS.find((domain) => domain.value === d)?.label
-  );
-  const featureLabels = requirements.features.map(
-    (f) => FEATURES.find((feature) => feature.id === f)?.label
-  );
+  const domainLabel = requirements.domain ? DOMAINS.find((domain) => domain.value === requirements.domain)?.label : '';
+  const featureLabels = requirements.features;
   const designStyleLabel = DESIGN_STYLES.find(
     (s) => s.value === requirements.designStyle
   )?.label;
@@ -51,20 +47,16 @@ export function SummaryStep({ requirements, onEdit, onGenerate }: SummaryStepPro
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Domains</CardTitle>
+            <CardTitle>Domain</CardTitle>
             <Button variant="ghost" size="sm" onClick={() => onEdit(2)}>
               <Pencil size={16} className="mr-2" />
               Edit
             </Button>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {domainLabels.map((label, idx) => (
-                <Badge key={idx} variant="secondary" className="text-base px-4 py-2">
-                  {label}
-                </Badge>
-              ))}
-            </div>
+            <Badge variant="secondary" className="text-base px-4 py-2">
+              {domainLabel}
+            </Badge>
           </CardContent>
         </Card>
 

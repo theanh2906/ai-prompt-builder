@@ -1,16 +1,80 @@
+import { useState, useEffect } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { FEATURES, FEATURE_CATEGORIES } from '@/lib/form-config';
-import { CheckSquare, Square } from '@phosphor-icons/react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CheckSquare, Square, Sparkle, WarningCircle } from '@phosphor-icons/react';
+import { DomainType } from '@/lib/types';
+import { DOMAINS } from '@/lib/form-config';
 
 interface FeaturesStepProps {
   values: string[];
   onChange: (values: string[]) => void;
+  selectedDomain: DomainType | null;
 }
 
-export function FeaturesStep({ values, onChange }: FeaturesStepProps) {
+interface GeneratedFeature {
+  id: string;
+  label: string;
+}
+
+export function FeaturesStep({ values, onChange, selectedDomain }: FeaturesStepProps) {
+  const [features, setFeatures] = useState<GeneratedFeature[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedDomain) {
+      generateFeatures(selectedDomain);
+    }
+  }, [selectedDomain]);
+
+  const generateFeatures = async (domain: DomainType) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const domainInfo = DOMAINS.find(d => d.value === domain);
+      const domainLabel = domainInfo?.label || domain;
+
+      const promptText = `You are a product requirements expert. Generate a comprehensive list of exactly 30 common features for a ${domainLabel} application (${domain} domain).
+
+Return the result as a valid JSON object with a single property called "features" that contains an array of feature objects.
+
+Each feature object must have:
+- id: a unique kebab-case identifier (e.g., "user-authentication")
+- label: a clear, descriptive feature name (e.g., "User Authentication & Login")
+
+Focus on features that are:
+1. Specific to the ${domainLabel} industry
+2. Commonly requested in modern applications
+3. Ranging from essential to advanced functionality
+4. Practical and implementable
+
+Return the result as JSON in the following format:
+{
+  "features": [
+    {"id": "unique-feature-id", "label": "Feature Name"},
+    ...more features
+  ]
+}`;
+
+      const result = await window.spark.llm(promptText, "gpt-4o", true);
+      const parsedResult = JSON.parse(result);
+
+      if (parsedResult.features && Array.isArray(parsedResult.features)) {
+        setFeatures(parsedResult.features);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (err) {
+      console.error('Error generating features:', err);
+      setError('Failed to generate features. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleToggle = (featureId: string) => {
     if (values.includes(featureId)) {
       onChange(values.filter((v) => v !== featureId));
@@ -19,26 +83,8 @@ export function FeaturesStep({ values, onChange }: FeaturesStepProps) {
     }
   };
 
-  const handleSelectAllCategory = (categoryId: string) => {
-    const categoryFeatures = FEATURES.filter((f) => f.category === categoryId);
-    const categoryFeatureIds = categoryFeatures.map((f) => f.id);
-    const allSelected = categoryFeatureIds.every((id) => values.includes(id));
-
-    if (allSelected) {
-      onChange(values.filter((v) => !categoryFeatureIds.includes(v)));
-    } else {
-      const newValues = [...values];
-      categoryFeatureIds.forEach((id) => {
-        if (!newValues.includes(id)) {
-          newValues.push(id);
-        }
-      });
-      onChange(newValues);
-    }
-  };
-
   const handleSelectAll = () => {
-    const allFeatureIds = FEATURES.map((f) => f.id);
+    const allFeatureIds = features.map((f) => f.id);
     const allSelected = allFeatureIds.every((id) => values.includes(id));
 
     if (allSelected) {
@@ -48,16 +94,75 @@ export function FeaturesStep({ values, onChange }: FeaturesStepProps) {
     }
   };
 
-  const totalFeatures = FEATURES.length;
   const selectedCount = values.length;
+  const totalFeatures = features.length;
   const allSelected = totalFeatures > 0 && selectedCount === totalFeatures;
+
+  if (!selectedDomain) {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-3">
+          <h2 className="text-3xl md:text-4xl font-bold">Select Features</h2>
+          <p className="text-lg text-muted-foreground">
+            Choose the features you'd like in your product
+          </p>
+        </div>
+        <Alert>
+          <WarningCircle className="h-5 w-5" />
+          <AlertDescription className="ml-2">
+            Please select a domain first to see relevant features
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-3">
+          <h2 className="text-3xl md:text-4xl font-bold">Select Features</h2>
+          <p className="text-lg text-muted-foreground">
+            Choose the features you'd like in your product
+          </p>
+        </div>
+        <div className="flex flex-col items-center justify-center py-16 space-y-4">
+          <Sparkle size={48} className="text-primary animate-pulse" weight="fill" />
+          <p className="text-lg font-medium">Generating features with AI...</p>
+          <p className="text-sm text-muted-foreground">This will take just a moment</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-3">
+          <h2 className="text-3xl md:text-4xl font-bold">Select Features</h2>
+          <p className="text-lg text-muted-foreground">
+            Choose the features you'd like in your product
+          </p>
+        </div>
+        <Alert variant="destructive">
+          <WarningCircle className="h-5 w-5" />
+          <AlertDescription className="ml-2">
+            {error}
+          </AlertDescription>
+        </Alert>
+        <Button onClick={() => generateFeatures(selectedDomain)} variant="outline">
+          Try Again
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="space-y-3">
         <h2 className="text-3xl md:text-4xl font-bold">Select Features</h2>
         <p className="text-lg text-muted-foreground">
-          Choose the features you'd like in your product
+          AI-generated features for {DOMAINS.find(d => d.value === selectedDomain)?.label}
         </p>
       </div>
 
@@ -90,74 +195,27 @@ export function FeaturesStep({ values, onChange }: FeaturesStepProps) {
         </Button>
       </div>
 
-      <Accordion type="multiple" className="space-y-4" defaultValue={FEATURE_CATEGORIES.map(c => c.id)}>
-        {FEATURE_CATEGORIES.map((category) => {
-          const categoryFeatures = FEATURES.filter((f) => f.category === category.id);
-          const selectedCount = categoryFeatures.filter((f) => values.includes(f.id)).length;
-          const allSelected = categoryFeatures.length > 0 && selectedCount === categoryFeatures.length;
-
-          return (
-            <AccordionItem
-              key={category.id}
-              value={category.id}
-              className="border border-border rounded-lg px-6 bg-card"
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {features.map((feature) => (
+          <div
+            key={feature.id}
+            className="flex items-start space-x-3 p-4 rounded-lg border bg-card hover:border-primary/50 transition-colors"
+          >
+            <Checkbox
+              id={feature.id}
+              checked={values.includes(feature.id)}
+              onCheckedChange={() => handleToggle(feature.id)}
+              className="mt-0.5"
+            />
+            <Label
+              htmlFor={feature.id}
+              className="text-base cursor-pointer flex-1 leading-relaxed"
             >
-              <AccordionTrigger className="hover:no-underline py-4">
-                <div className="flex items-center justify-between w-full pr-4">
-                  <span className="font-semibold text-lg">{category.label}</span>
-                  {selectedCount > 0 && (
-                    <span className="text-sm bg-primary text-primary-foreground px-3 py-1 rounded-full">
-                      {selectedCount} selected
-                    </span>
-                  )}
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pb-6">
-                <div className="space-y-4 pt-2">
-                  <div className="flex items-center justify-between pb-3 border-b">
-                    <span className="text-sm text-muted-foreground">
-                      {selectedCount} of {categoryFeatures.length} selected
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSelectAllCategory(category.id)}
-                      className="h-8 text-sm"
-                    >
-                      {allSelected ? (
-                        <>
-                          <Square className="mr-2" size={16} />
-                          Deselect All
-                        </>
-                      ) : (
-                        <>
-                          <CheckSquare className="mr-2" size={16} />
-                          Select All
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                  {categoryFeatures.map((feature) => (
-                    <div key={feature.id} className="flex items-center space-x-3">
-                      <Checkbox
-                        id={feature.id}
-                        checked={values.includes(feature.id)}
-                        onCheckedChange={() => handleToggle(feature.id)}
-                      />
-                      <Label
-                        htmlFor={feature.id}
-                        className="text-base cursor-pointer flex-1"
-                      >
-                        {feature.label}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
+              {feature.label}
+            </Label>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
