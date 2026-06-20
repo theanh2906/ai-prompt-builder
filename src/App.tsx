@@ -319,8 +319,8 @@ function App() {
       </div>
 
       <Dialog open={showPrompt} onOpenChange={setShowPrompt}>
-        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col gap-0 p-0">
-          <div className="px-6 pt-6">
+        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
+          <div className="px-6 pt-6 pb-4 shrink-0">
             <DialogHeader>
               <DialogTitle className="text-2xl">Your AI Prompt is Ready!</DialogTitle>
               <DialogDescription>
@@ -328,12 +328,12 @@ function App() {
               </DialogDescription>
             </DialogHeader>
           </div>
-          <ScrollArea className="flex-1 px-6 py-4">
+          <ScrollArea className="flex-1 min-h-0 px-6">
             <pre className="bg-muted p-6 rounded-lg text-sm font-mono leading-relaxed whitespace-pre-wrap">
               {generatedPrompt}
             </pre>
           </ScrollArea>
-          <div className="flex gap-3 px-6 pb-6 pt-4 border-t">
+          <div className="flex gap-3 px-6 pb-6 pt-4 border-t shrink-0">
             <Button onClick={handleCopyPrompt} variant="outline" className="flex-1">
               {copied ? (
                 <>
