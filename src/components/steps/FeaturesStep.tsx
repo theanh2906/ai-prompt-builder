@@ -37,6 +37,21 @@ export function FeaturesStep({ values, onChange }: FeaturesStepProps) {
     }
   };
 
+  const handleSelectAll = () => {
+    const allFeatureIds = FEATURES.map((f) => f.id);
+    const allSelected = allFeatureIds.every((id) => values.includes(id));
+
+    if (allSelected) {
+      onChange([]);
+    } else {
+      onChange(allFeatureIds);
+    }
+  };
+
+  const totalFeatures = FEATURES.length;
+  const selectedCount = values.length;
+  const allSelected = totalFeatures > 0 && selectedCount === totalFeatures;
+
   return (
     <div className="space-y-6">
       <div className="space-y-3">
@@ -46,7 +61,36 @@ export function FeaturesStep({ values, onChange }: FeaturesStepProps) {
         </p>
       </div>
 
-      <Accordion type="multiple" className="space-y-4 mt-8" defaultValue={FEATURE_CATEGORIES.map(c => c.id)}>
+      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl border-2 border-primary/20">
+        <div className="space-y-1">
+          <div className="font-semibold text-lg">
+            {selectedCount} of {totalFeatures} features selected
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {allSelected ? 'All features are selected' : 'Select features you need for your project'}
+          </div>
+        </div>
+        <Button
+          onClick={handleSelectAll}
+          size="lg"
+          variant={allSelected ? 'outline' : 'default'}
+          className="h-12 px-6 text-base font-semibold"
+        >
+          {allSelected ? (
+            <>
+              <Square className="mr-2" size={20} />
+              Deselect All
+            </>
+          ) : (
+            <>
+              <CheckSquare className="mr-2" size={20} />
+              Select All
+            </>
+          )}
+        </Button>
+      </div>
+
+      <Accordion type="multiple" className="space-y-4" defaultValue={FEATURE_CATEGORIES.map(c => c.id)}>
         {FEATURE_CATEGORIES.map((category) => {
           const categoryFeatures = FEATURES.filter((f) => f.category === category.id);
           const selectedCount = categoryFeatures.filter((f) => values.includes(f.id)).length;
