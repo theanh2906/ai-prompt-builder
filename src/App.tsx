@@ -65,11 +65,11 @@ function App() {
   };
 
   const handleDownloadPrompt = () => {
-    const blob = new Blob([generatedPrompt], { type: 'text/plain' });
+    const blob = new Blob([generatedPrompt], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'ai-prompt.txt';
+    a.download = 'ai-prompt.md';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -319,19 +319,21 @@ function App() {
       </div>
 
       <Dialog open={showPrompt} onOpenChange={setShowPrompt}>
-        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">Your AI Prompt is Ready!</DialogTitle>
-            <DialogDescription>
-              Copy this prompt and paste it into any AI code generation tool for best results
-            </DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="flex-1 mt-4">
+        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col gap-0 p-0">
+          <div className="px-6 pt-6">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Your AI Prompt is Ready!</DialogTitle>
+              <DialogDescription>
+                Copy this prompt and paste it into any AI code generation tool for best results
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <ScrollArea className="flex-1 px-6 py-4">
             <pre className="bg-muted p-6 rounded-lg text-sm font-mono leading-relaxed whitespace-pre-wrap">
               {generatedPrompt}
             </pre>
           </ScrollArea>
-          <div className="flex gap-3 pt-4 border-t mt-4">
+          <div className="flex gap-3 px-6 pb-6 pt-4 border-t">
             <Button onClick={handleCopyPrompt} variant="outline" className="flex-1">
               {copied ? (
                 <>
@@ -341,13 +343,13 @@ function App() {
               ) : (
                 <>
                   <Copy className="mr-2" size={18} />
-                  Copy Prompt
+                  Copy All
                 </>
               )}
             </Button>
             <Button onClick={handleDownloadPrompt} className="flex-1">
               <Download className="mr-2" size={18} />
-              Download as .txt
+              Download (.md)
             </Button>
           </div>
         </DialogContent>
