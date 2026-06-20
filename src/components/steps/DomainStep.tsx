@@ -1,5 +1,4 @@
 import { SelectionCard } from '@/components/SelectionCard';
-import { Button } from '@/components/ui/button';
 import { DOMAINS } from '@/lib/form-config';
 import { DomainType } from '@/lib/types';
 import {
@@ -13,8 +12,6 @@ import {
   ListChecks,
   Airplane,
   ForkKnife,
-  CheckSquare,
-  Square,
 } from '@phosphor-icons/react';
 
 interface DomainStepProps {
@@ -44,20 +41,6 @@ export function DomainStep({ values, onChange }: DomainStepProps) {
     }
   };
 
-  const handleSelectAll = () => {
-    const allDomainValues = DOMAINS.map((d) => d.value);
-    const allSelected = allDomainValues.every((d) => values.includes(d));
-
-    if (allSelected) {
-      onChange([]);
-    } else {
-      onChange(allDomainValues);
-    }
-  };
-
-  const allDomainValues = DOMAINS.map((d) => d.value);
-  const allSelected = allDomainValues.every((d) => values.includes(d));
-
   return (
     <div className="space-y-6">
       <div className="space-y-3">
@@ -65,27 +48,6 @@ export function DomainStep({ values, onChange }: DomainStepProps) {
         <p className="text-lg text-muted-foreground">
           Choose one or more industries for your product
         </p>
-      </div>
-
-      <div className="flex justify-end">
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={handleSelectAll}
-          className="text-base"
-        >
-          {allSelected ? (
-            <>
-              <Square className="mr-2" size={20} />
-              Deselect All
-            </>
-          ) : (
-            <>
-              <CheckSquare className="mr-2" size={20} />
-              Select All
-            </>
-          )}
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
