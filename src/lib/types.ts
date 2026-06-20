@@ -20,7 +20,13 @@ export type FeatureCategory =
   | 'social'
   | 'media'
   | 'notification'
-  | 'search';
+  | 'search'
+  | 'data'
+  | 'productivity'
+  | 'integration'
+  | 'localization'
+  | 'admin'
+  | 'ui-ux';
 
 export type DesignStyle = 'modern' | 'classic' | 'playful' | 'corporate' | 'minimal';
 
