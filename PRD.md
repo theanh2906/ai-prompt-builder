@@ -1,150 +1,137 @@
 # Planning Guide
 
-A web application for collecting product requirements from customers through an intuitive multi-step form interface, converting selections into structured JSON for an AI agent system (BA, Designer, Lead, Dev agents) to process and build products.
+A prompt builder tool that helps developers construct high-quality, comprehensive prompts for AI code generation agents, ensuring at least 70% accuracy in generating the expected output.
 
-**Experience Qualities**:
-1. **Conversational** - The form should feel like a natural dialogue rather than a bureaucratic questionnaire
-2. **Effortless** - Users glide through selections with minimal cognitive load and zero typing burden  
-3. **Confident** - Clear progress indication and validation create trust that their requirements are being captured accurately
+**Experience Qualities**: 
+1. **Precise** - Every selection contributes to a specific, actionable prompt element that directly influences code generation
+2. **Visual** - Live theme preview allows users to see exactly what their color choices will look like before generating the prompt
+3. **Efficient** - Streamlined multi-step process guides users from concept to complete prompt in minutes
 
 **Complexity Level**: Light Application (multiple features with basic state)
-This is a guided form collection tool with multiple steps, form state management, and JSON export functionality. It's more than a single-purpose tool but not a complex multi-view application.
+This is a guided form-based tool with state management across steps, theme preview functionality, and prompt generation logic. It doesn't require authentication, backend APIs, or complex data relationships.
 
 ## Essential Features
 
-### Multi-Step Requirement Form
-- **Functionality**: Progressive form with multiple categories (Platform, Domain, Features, Design Preferences, etc.)
-- **Purpose**: Break down complex requirement gathering into digestible chunks
-- **Trigger**: User clicks "Start New Project" on home screen
-- **Progression**: Welcome screen → Platform selection → Domain selection → Feature checkboxes → Design preferences → Timeline/Budget → Review summary → Generate JSON
-- **Success criteria**: User can complete form in under 3 minutes; all selections are captured in final JSON
+### Multi-Step Requirement Collection
+- **Functionality**: Guided wizard interface collecting platform, domain, features, and design preferences
+- **Purpose**: Structures user input into organized sections that map to prompt components
+- **Trigger**: User clicks "Start New Project" button
+- **Progression**: Welcome screen → Platform selection → Domain selection → Features selection → Design style → Theme selection → Summary/Generate
+- **Success criteria**: Users can navigate forward/backward, selections persist, progress indicator shows current position
 
-### Platform Selection
-- **Functionality**: Single-choice selection between Web, Mobile (iOS/Android), or Both
-- **Purpose**: Determine the primary development target
-- **Trigger**: First step after starting form
-- **Progression**: Display large touch-friendly cards with icons → User taps selection → Auto-advance to next step
-- **Success criteria**: Selection is visually confirmed and stored
+### Theme Selection System (20 Presets)
+- **Functionality**: Visual theme selector with 20 pre-configured color palettes inspired by GitHub Spark's theme system
+- **Purpose**: Provides professional, tested color combinations that users can specify in their prompt
+- **Trigger**: User reaches the theme selection step in the wizard
+- **Progression**: User views theme grid → Filters/searches themes → Selects theme → Sees live preview → Confirms selection
+- **Success criteria**: Theme preview accurately represents the color scheme; selected theme is included in final prompt
 
-### Domain/Industry Selection
-- **Functionality**: Single or multi-select from categorized domains
-- **Purpose**: Understand the business context and requirements
-- **Trigger**: After platform selection
-- **Progression**: Grid of domain cards (Finance, Healthcare, E-commerce, Education, Management, Social, Entertainment, etc.) → User selects one or more → Continue button appears
-- **Success criteria**: At least one domain selected to proceed
+### Live Theme Preview Window
+- **Functionality**: Real-time preview panel showing how selected theme looks on actual UI components
+- **Purpose**: Eliminates guesswork by showing visual representation of color choices
+- **Trigger**: User selects a theme from the theme picker
+- **Progression**: Theme selected → Preview updates instantly → Shows buttons, cards, inputs with applied colors
+- **Success criteria**: Preview renders within 100ms of selection, accurately displays all theme colors on various component states
 
-### Feature Selection
-- **Functionality**: Multi-select checkboxes grouped by feature categories
-- **Purpose**: Capture specific functional requirements
-- **Trigger**: After domain selection
-- **Progression**: Categorized feature list (Auth, Payments, Analytics, Real-time features, etc.) → User checks desired features → Continue when ready
-- **Success criteria**: Selected features are tagged and stored
+### Prompt Generation Engine
+- **Functionality**: Converts all user selections into a comprehensive, structured prompt optimized for AI code generators
+- **Purpose**: Transforms structured data into natural language instructions that achieve 70%+ accuracy
+- **Trigger**: User clicks "Generate Prompt" on summary screen
+- **Progression**: Collect all selections → Format into sections → Include theme specifics → Generate complete prompt → Display in modal
+- **Success criteria**: Generated prompt is copy-ready, includes all selections, follows best practices for AI prompting
 
-### Design Preference Capture
-- **Functionality**: Quick selections for design style and branding
-- **Purpose**: Guide the Designer agent
-- **Trigger**: After feature selection
-- **Progression**: Style options (Modern, Classic, Playful, Corporate) → Color mood selection → Continue
-- **Success criteria**: Design preferences captured in JSON
-
-### Requirement Summary & JSON Export
-- **Functionality**: Review all selections with ability to edit; generate and display JSON
-- **Purpose**: Validate requirements before submission
-- **Trigger**: After completing all form steps
-- **Progression**: Display summary cards organized by category → Edit button per section → Generate JSON button → JSON displayed in copyable format → Submit/Download options
-- **Success criteria**: JSON is valid, complete, and matches all user selections
+### Prompt Output Actions
+- **Functionality**: Copy to clipboard and download as .txt options for generated prompt
+- **Purpose**: Easy export of final prompt for use in any AI code generation tool
+- **Trigger**: User views generated prompt in modal
+- **Progression**: Prompt displayed → User clicks Copy/Download → Confirmation feedback → Prompt ready to use
+- **Success criteria**: Copy works across browsers, download creates properly formatted .txt file, toast confirmation appears
 
 ## Edge Case Handling
 
-- **Incomplete Form Exit**: Auto-save progress to localStorage; offer to resume on return
-- **No Selections Made**: Disable continue buttons until minimum selections are made
-- **Back Navigation**: Allow users to go back and modify previous selections without losing data
-- **Invalid State**: Validate required fields before allowing progression
-- **Mobile Keyboard**: Ensure form controls remain accessible when virtual keyboard appears
-- **Offline State**: Cache form structure; show warning if submission requires connection
+- **No selections made**: Continue button disabled until minimum requirements met for each step
+- **Browser back button**: State persists, user returns to current step without data loss
+- **Theme search with no results**: Shows "No themes found" message with clear filters option
+- **Very long feature lists**: Scroll container with max height, clear visual indication of scrollable area
+- **Mobile viewport**: Theme preview adapts to smaller screen, potentially stacks side-by-side layout vertically
 
 ## Design Direction
 
-The design should evoke a sense of innovation, professionalism, and forward momentum - like you're building something exciting with AI assistance. It should feel modern and tech-forward without being intimidating, using friendly language and smooth interactions that make complex requirement gathering feel simple.
+The design should feel like a professional developer tool - clean, efficient, and trustworthy. It should communicate precision and capability while remaining approachable. The interface should feel modern and aligned with contemporary development tools, with subtle animations that guide attention without distraction.
 
 ## Color Selection
 
-A vibrant tech-forward palette with deep purples and electric accents that communicate AI innovation and modern development.
+A sophisticated, developer-focused palette with high contrast and clear visual hierarchy.
 
-- **Primary Color**: Deep Purple `oklch(0.45 0.18 290)` - Represents AI/tech innovation, creates sophisticated tech brand feel
-- **Secondary Colors**: 
-  - Darker Purple `oklch(0.35 0.16 290)` for depth and emphasis
-  - Light Purple `oklch(0.95 0.05 290)` for subtle backgrounds and hover states
-- **Accent Color**: Electric Cyan `oklch(0.70 0.15 200)` - High-energy highlight for CTAs, active states, and progress indicators
+- **Primary Color**: Deep cyan `oklch(0.55 0.18 195)` - Communicates technology, precision, and trust. Used for CTAs and active states.
+- **Secondary Colors**: Slate gray `oklch(0.88 0.01 240)` for secondary actions; warm gray `oklch(0.45 0.01 240)` for muted text
+- **Accent Color**: Electric violet `oklch(0.65 0.25 285)` - Attention-grabbing highlight for interactive elements, selected states, and theme preview borders
 - **Foreground/Background Pairings**: 
-  - Background Light `oklch(0.98 0.01 290)` on Primary Purple - Ratio 8.2:1 ✓
-  - Primary Purple: White text `oklch(1 0 0)` - Ratio 7.8:1 ✓
-  - Accent Cyan: White text `oklch(1 0 0)` - Ratio 4.9:1 ✓
-  - Muted Purple `oklch(0.85 0.03 290)` with dark text `oklch(0.25 0.05 290)` - Ratio 9.1:1 ✓
+  - Primary (Deep Cyan oklch(0.55 0.18 195)): White text (oklch(0.99 0 0)) - Ratio 7.2:1 ✓
+  - Accent (Electric Violet oklch(0.65 0.25 285)): White text (oklch(0.99 0 0)) - Ratio 6.8:1 ✓
+  - Background (Soft White oklch(0.98 0.005 240)): Dark text (oklch(0.20 0.01 240)) - Ratio 14.1:1 ✓
+  - Card (Pure White oklch(1.0 0 0)): Dark text (oklch(0.20 0.01 240)) - Ratio 16.5:1 ✓
 
 ## Font Selection
 
-Typography should convey modern tech professionalism with excellent readability on mobile screens, using geometric forms that echo the precision of software development.
-
-- **Primary Font**: Space Grotesk (700/600/500 weights) - Modern geometric sans with tech-forward personality for headings
-- **Secondary Font**: Inter (400/500/600 weights) - Clean, highly legible for body text and form elements
+Typography should feel technical yet accessible, with excellent readability for both UI elements and code-like content (prompt output).
 
 - **Typographic Hierarchy**: 
-  - H1 (Page Titles): Space Grotesk Bold 32px / tight leading / -0.02em tracking
-  - H2 (Section Headers): Space Grotesk SemiBold 24px / normal leading / -0.01em tracking
-  - H3 (Card Titles): Space Grotesk Medium 18px / normal leading
-  - Body (Descriptions): Inter Regular 16px / 1.6 line-height
-  - Labels: Inter Medium 14px / 1.4 line-height / 0.01em tracking
-  - Buttons: Inter SemiBold 16px / uppercase / 0.05em tracking
+  - H1 (Page Title): Space Grotesk Bold / 36px / tight tracking (-0.02em)
+  - H2 (Step Titles): Space Grotesk Semibold / 28px / tight tracking
+  - H3 (Section Headers): Space Grotesk Medium / 20px / normal tracking
+  - Body (Descriptions): Inter Regular / 16px / relaxed line-height (1.6)
+  - Code/Prompt Output: JetBrains Mono Regular / 14px / normal line-height (1.5)
+  - Button Text: Inter Semibold / 15px / slight tracking (0.01em)
 
 ## Animations
 
-Animations should create a sense of fluid progression and intelligent response - each interaction should feel like the system is actively understanding and processing the user's input. Use smooth page transitions between form steps (slide left/right), gentle scale transforms on card selection (scale 1.02 with shadow increase), and a satisfying progress bar that fills with elastic easing. Micro-interactions like checkbox checks should have subtle bounces, and the final JSON generation should have a brief "processing" animation to build anticipation.
+Animations should emphasize state transitions and guide users through the multi-step flow. Keep animations quick (200-300ms) to maintain the efficient, professional feel.
+
+- **Step transitions**: Subtle slide + fade (300ms ease-out) when moving between wizard steps
+- **Theme selection**: Scale + glow effect (150ms) on hover, quick snap to selected state with checkmark fade-in
+- **Preview updates**: Smooth color transition (200ms) when theme changes, avoiding jarring instant switches
+- **Button interactions**: Micro-scale on press (100ms), ripple effect for primary actions
+- **Modal entry**: Backdrop fade + content slide-up (250ms) for prompt display dialog
 
 ## Component Selection
 
 - **Components**: 
-  - Card: Primary selection component for platform/domain choices with hover effects and selected states
-  - Button: Primary and secondary variants for navigation and actions
-  - Checkbox: Multi-select features with custom styling
-  - Progress: Top-bar progress indicator showing completion percentage
-  - Badge: Tag selected items in summary view
-  - Separator: Visual breaks between form sections
-  - Accordion: Expandable feature categories
-  - Dialog: JSON output display with copy functionality
-  - Sheet: Mobile-optimized slide-up panel for editing sections on summary page
-  - Scroll-area: For long feature lists
-
+  - `Dialog` for prompt output modal with copy/download actions
+  - `Card` for theme selection tiles, step containers, and preview window
+  - `Button` with primary variant for Continue/Generate, outline for Back/secondary actions
+  - `Progress` component customized for multi-step wizard indicator
+  - `Input` with search icon for theme filtering
+  - `Badge` for displaying selected features/domains count
+  - `ScrollArea` for long feature lists and theme grid
+  - `Separator` to divide sections within steps
+  - `Tooltip` for theme names on hover
+  
 - **Customizations**: 
-  - Selection Cards: Custom component with large touch targets (min 80px height), icon placement, selected state with border glow
-  - Step Indicator: Custom horizontal stepper showing current/completed/upcoming steps
-  - JSON Viewer: Syntax-highlighted display with copy button
-
+  - Theme preview card: Custom component showing live color swatches + mini UI elements (buttons, inputs) rendered with theme
+  - Prompt output display: Custom formatted text block with syntax-style highlighting for better readability
+  - Step progress indicator: Custom horizontal stepper with connecting lines and completion checkmarks
+  
 - **States**: 
-  - Cards: default (subtle border) → hover (lift + shadow) → selected (purple border + purple background tint + check icon)
-  - Buttons: default → hover (darken 10%) → active (scale 0.98) → disabled (50% opacity)
-  - Checkboxes: unchecked → hover (border accent) → checked (filled with animation)
-  - Progress bar: smooth fill with gradient, pulsing on step transition
-
+  - Buttons: Distinct hover (lift + shadow), active (press down), disabled (low opacity + no interaction)
+  - Theme cards: Default (subtle border), hover (border glow + scale 1.02), selected (thick accent border + checkmark badge)
+  - Inputs: Focus ring with accent color, error state with red border (if validation added later)
+  
 - **Icon Selection**: 
-  - Platform: DeviceMobile, Desktop, Devices
-  - Domains: CurrencyDollar, Heart, ShoppingCart, GraduationCap, ChartBar, Users, GameController
-  - Actions: ArrowRight, ArrowLeft, Check, Copy, Download
-  - Features: Lock, CreditCard, ChartLine, Lightning, Bell
-  - Navigation: List (menu), X (close)
-
+  - `Sparkles` for generate/AI-related actions
+  - `Copy` and `Download` for prompt output actions
+  - `Check` for completion states and confirmations
+  - `MagnifyingGlass` for theme search
+  - `CaretLeft/Right` for navigation
+  - `Palette` for theme-related indicators
+  
 - **Spacing**: 
-  - Page padding: px-6 py-8 (mobile), px-12 py-12 (desktop)
-  - Card gap: gap-4 (mobile), gap-6 (desktop)
-  - Section spacing: space-y-8
-  - Form element spacing: space-y-6
-  - Internal card padding: p-6
-
+  - Consistent 4px base unit: 16px (4) for component padding, 24px (6) for section gaps, 32px (8) for major layout divisions
+  - Wizard container: 48px (12) vertical padding, 32px (8) horizontal
+  - Theme grid: 16px (4) gap between cards
+  
 - **Mobile**: 
-  - Single column card layout on mobile, 2-3 columns on tablet/desktop
-  - Fixed bottom navigation bar with back/continue buttons
-  - Sticky progress bar at top
-  - Touch-friendly minimum 44px tap targets
-  - Collapsible sections in summary view
-  - Sheet component for edit modals instead of full dialog
-  - Increased font sizes on mobile (18px body minimum)
+  - Theme grid: 2 columns on mobile (<640px), 4 columns on tablet (640-1024px), 5 columns on desktop (>1024px)
+  - Preview window: Stacks below theme selector on mobile, side-by-side on tablet+
+  - Step navigation: Full-width buttons on mobile with reduced padding
+  - Wizard progress: Compress to dots-only on very small screens (<375px)

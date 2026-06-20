@@ -38,6 +38,7 @@ export interface ProjectRequirements {
   features: string[];
   designStyle: DesignStyle | null;
   colorMood: ColorMood | null;
+  themeId: string | null;
   timeline?: string;
   budget?: string;
   additionalNotes?: string;

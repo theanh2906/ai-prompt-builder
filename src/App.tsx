@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sparkle, Copy, Download, Check } from '@phosphor-icons/react';
 import { StepProgress } from '@/components/StepProgress';
 import { StepContainer } from '@/components/StepContainer';
@@ -8,16 +9,20 @@ import { PlatformStep } from '@/components/steps/PlatformStep';
 import { DomainStep } from '@/components/steps/DomainStep';
 import { FeaturesStep } from '@/components/steps/FeaturesStep';
 import { DesignStep } from '@/components/steps/DesignStep';
-import { SummaryStep } from '@/components/steps/SummaryStep';
+import { ThemeStep } from '@/components/steps/ThemeStep';
+import { ThemePreview } from '@/components/ThemePreview';
 import { ProjectRequirements, PlatformType, DomainType, DesignStyle, ColorMood } from '@/lib/types';
+import { getThemeById } from '@/lib/themes';
+import { generatePrompt } from '@/lib/promptGenerator';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
 function App() {
   const [started, setStarted] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const [showJson, setShowJson] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [generatedPrompt, setGeneratedPrompt] = useState('');
   
   const [requirements, setRequirements] = useState<ProjectRequirements>({
     platform: null,
@@ -25,9 +30,10 @@ function App() {
     features: [],
     designStyle: null,
     colorMood: null,
+    themeId: null,
   });
 
-  const totalSteps = 5;
+  const totalSteps = 6;
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -45,30 +51,30 @@ function App() {
     setStarted(true);
   };
 
-  const handleGenerateJSON = () => {
-    setShowJson(true);
+  const handleGeneratePrompt = () => {
+    const prompt = generatePrompt(requirements);
+    setGeneratedPrompt(prompt);
+    setShowPrompt(true);
   };
 
-  const handleCopyJSON = () => {
-    const json = JSON.stringify(requirements, null, 2);
-    navigator.clipboard.writeText(json);
+  const handleCopyPrompt = () => {
+    navigator.clipboard.writeText(generatedPrompt);
     setCopied(true);
-    toast.success('JSON copied to clipboard!');
+    toast.success('Prompt copied to clipboard!');
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownloadJSON = () => {
-    const json = JSON.stringify(requirements, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
+  const handleDownloadPrompt = () => {
+    const blob = new Blob([generatedPrompt], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'project-requirements.json';
+    a.download = 'ai-prompt.txt';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success('JSON downloaded!');
+    toast.success('Prompt downloaded!');
   };
 
   const canProceed = () => {
@@ -82,11 +88,15 @@ function App() {
       case 4:
         return requirements.designStyle !== null && requirements.colorMood !== null;
       case 5:
+        return requirements.themeId !== null;
+      case 6:
         return true;
       default:
         return false;
     }
   };
+
+  const selectedTheme = requirements.themeId ? getThemeById(requirements.themeId) : null;
 
   if (!started) {
     return (
@@ -107,10 +117,10 @@ function App() {
               <Sparkle size={40} weight="fill" />
             </motion.div>
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
-              AI Product Builder
+              AI Prompt Builder
             </h1>
             <p className="text-xl text-muted-foreground max-w-lg mx-auto">
-              Tell us what you need, and our AI agents will design and build your product
+              Create comprehensive prompts that generate accurate code with any AI agent - achieve 70%+ accuracy
             </p>
           </div>
 
@@ -120,29 +130,29 @@ function App() {
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
                   1
                 </div>
-                <h3 className="font-semibold">BA Agent</h3>
-                <p className="text-sm text-muted-foreground">Analyzes your requirements</p>
+                <h3 className="font-semibold">Choose Platform</h3>
+                <p className="text-sm text-muted-foreground">Select your target platform</p>
               </div>
               <div className="space-y-2">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
                   2
                 </div>
-                <h3 className="font-semibold">Designer Agent</h3>
-                <p className="text-sm text-muted-foreground">Creates UI/UX designs</p>
+                <h3 className="font-semibold">Define Domain</h3>
+                <p className="text-sm text-muted-foreground">Pick your app category</p>
               </div>
               <div className="space-y-2">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
                   3
                 </div>
-                <h3 className="font-semibold">Lead Agent</h3>
-                <p className="text-sm text-muted-foreground">Breaks down tasks</p>
+                <h3 className="font-semibold">Select Features</h3>
+                <p className="text-sm text-muted-foreground">Choose core functionality</p>
               </div>
               <div className="space-y-2">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
                   4
                 </div>
-                <h3 className="font-semibold">Dev Agent</h3>
-                <p className="text-sm text-muted-foreground">Implements your product</p>
+                <h3 className="font-semibold">Pick Theme</h3>
+                <p className="text-sm text-muted-foreground">Select color palette & preview</p>
               </div>
             </div>
           </div>
@@ -152,7 +162,7 @@ function App() {
             onClick={handleStart}
             className="text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
           >
-            Start New Project
+            Start Building Prompt
           </Button>
         </motion.div>
       </div>
@@ -162,57 +172,134 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-primary/5 to-accent/10">
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="max-w-4xl mx-auto px-6 py-6">
+        <div className="max-w-7xl mx-auto px-6 py-6">
           <StepProgress currentStep={currentStep} totalSteps={totalSteps} />
         </div>
       </div>
 
       <div className="flex-1 flex items-start justify-center p-6 pb-32 overflow-y-auto">
-        <div className="w-full max-w-4xl">
-          <StepContainer step={currentStep}>
-            {currentStep === 1 && (
-              <PlatformStep
-                value={requirements.platform}
-                onChange={(platform: PlatformType) => setRequirements({ ...requirements, platform })}
-              />
-            )}
-            {currentStep === 2 && (
-              <DomainStep
-                values={requirements.domains}
-                onChange={(domains: DomainType[]) => setRequirements({ ...requirements, domains })}
-              />
-            )}
-            {currentStep === 3 && (
-              <FeaturesStep
-                values={requirements.features}
-                onChange={(features: string[]) => setRequirements({ ...requirements, features })}
-              />
-            )}
-            {currentStep === 4 && (
-              <DesignStep
-                designStyle={requirements.designStyle}
-                colorMood={requirements.colorMood}
-                onChangeDesignStyle={(designStyle: DesignStyle) =>
-                  setRequirements({ ...requirements, designStyle })
-                }
-                onChangeColorMood={(colorMood: ColorMood) =>
-                  setRequirements({ ...requirements, colorMood })
-                }
-              />
-            )}
+        <div className="w-full max-w-7xl">
+          <div className={currentStep === 5 ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : ""}>
+            <div className={currentStep === 5 ? "" : "max-w-4xl mx-auto w-full"}>
+              <StepContainer step={currentStep}>
+                {currentStep === 1 && (
+                  <PlatformStep
+                    value={requirements.platform}
+                    onChange={(platform: PlatformType) => setRequirements({ ...requirements, platform })}
+                  />
+                )}
+                {currentStep === 2 && (
+                  <DomainStep
+                    values={requirements.domains}
+                    onChange={(domains: DomainType[]) => setRequirements({ ...requirements, domains })}
+                  />
+                )}
+                {currentStep === 3 && (
+                  <FeaturesStep
+                    values={requirements.features}
+                    onChange={(features: string[]) => setRequirements({ ...requirements, features })}
+                  />
+                )}
+                {currentStep === 4 && (
+                  <DesignStep
+                    designStyle={requirements.designStyle}
+                    colorMood={requirements.colorMood}
+                    onChangeDesignStyle={(designStyle: DesignStyle) =>
+                      setRequirements({ ...requirements, designStyle })
+                    }
+                    onChangeColorMood={(colorMood: ColorMood) =>
+                      setRequirements({ ...requirements, colorMood })
+                    }
+                  />
+                )}
+                {currentStep === 5 && (
+                  <ThemeStep
+                    value={requirements.themeId}
+                    onChange={(themeId: string) => setRequirements({ ...requirements, themeId })}
+                  />
+                )}
+                {currentStep === 6 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="space-y-6"
+                  >
+                    <div className="space-y-2">
+                      <h2 className="text-3xl font-bold tracking-tight">Review & Generate</h2>
+                      <p className="text-muted-foreground text-lg">
+                        Review your selections and generate the AI prompt
+                      </p>
+                    </div>
+
+                    <div className="grid gap-4">
+                      <div className="bg-card p-6 rounded-lg border space-y-4">
+                        <div>
+                          <h3 className="font-semibold mb-2">Platform</h3>
+                          <p className="text-muted-foreground capitalize">{requirements.platform}</p>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold mb-2">Domains</h3>
+                          <div className="flex flex-wrap gap-2">
+                            {requirements.domains.map((domain) => (
+                              <span key={domain} className="px-3 py-1 bg-primary/10 text-primary rounded-md text-sm">
+                                {domain}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold mb-2">Features ({requirements.features.length})</h3>
+                          <div className="flex flex-wrap gap-2">
+                            {requirements.features.slice(0, 5).map((feature, idx) => (
+                              <span key={idx} className="px-3 py-1 bg-secondary text-secondary-foreground rounded-md text-sm">
+                                {feature}
+                              </span>
+                            ))}
+                            {requirements.features.length > 5 && (
+                              <span className="px-3 py-1 bg-muted text-muted-foreground rounded-md text-sm">
+                                +{requirements.features.length - 5} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold mb-2">Design Style</h3>
+                          <p className="text-muted-foreground capitalize">{requirements.designStyle} / {requirements.colorMood}</p>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold mb-2">Theme</h3>
+                          <p className="text-muted-foreground">{selectedTheme?.name || 'None selected'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button
+                      size="lg"
+                      onClick={handleGeneratePrompt}
+                      className="w-full text-lg py-6"
+                    >
+                      <Sparkle className="mr-2" size={24} weight="fill" />
+                      Generate AI Prompt
+                    </Button>
+                  </motion.div>
+                )}
+              </StepContainer>
+            </div>
+
             {currentStep === 5 && (
-              <SummaryStep
-                requirements={requirements}
-                onEdit={(step: number) => setCurrentStep(step)}
-                onGenerate={handleGenerateJSON}
-              />
+              <div className="hidden lg:block">
+                <div className="sticky top-24">
+                  <ThemePreview theme={selectedTheme || null} />
+                </div>
+              </div>
             )}
-          </StepContainer>
+          </div>
         </div>
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between gap-4">
           <Button
             variant="outline"
             onClick={handleBack}
@@ -231,18 +318,21 @@ function App() {
         </div>
       </div>
 
-      <Dialog open={showJson} onOpenChange={setShowJson}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
+      <Dialog open={showPrompt} onOpenChange={setShowPrompt}>
+        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Project Requirements JSON</DialogTitle>
+            <DialogTitle className="text-2xl">Your AI Prompt is Ready!</DialogTitle>
+            <DialogDescription>
+              Copy this prompt and paste it into any AI code generation tool for best results
+            </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-auto">
-            <pre className="bg-muted p-4 rounded-lg text-sm overflow-x-auto">
-              {JSON.stringify(requirements, null, 2)}
+          <ScrollArea className="flex-1 mt-4">
+            <pre className="bg-muted p-6 rounded-lg text-sm font-mono leading-relaxed whitespace-pre-wrap">
+              {generatedPrompt}
             </pre>
-          </div>
-          <div className="flex gap-3 pt-4 border-t">
-            <Button onClick={handleCopyJSON} variant="outline" className="flex-1">
+          </ScrollArea>
+          <div className="flex gap-3 pt-4 border-t mt-4">
+            <Button onClick={handleCopyPrompt} variant="outline" className="flex-1">
               {copied ? (
                 <>
                   <Check className="mr-2" size={18} />
@@ -251,13 +341,13 @@ function App() {
               ) : (
                 <>
                   <Copy className="mr-2" size={18} />
-                  Copy JSON
+                  Copy Prompt
                 </>
               )}
             </Button>
-            <Button onClick={handleDownloadJSON} className="flex-1">
+            <Button onClick={handleDownloadPrompt} className="flex-1">
               <Download className="mr-2" size={18} />
-              Download JSON
+              Download as .txt
             </Button>
           </div>
         </DialogContent>
