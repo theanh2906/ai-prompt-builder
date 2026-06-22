@@ -58,7 +58,7 @@ Return ONLY valid JSON in this exact format:
   ]
 }`;
 
-      const result = await window.spark.llm(prompt, 'gpt-4o', true);
+      const result = await window.spark.llm(prompt, 'gemini-3.5-flash', true);
       const parsed = JSON.parse(result);
       
       setSuggestions(parsed);

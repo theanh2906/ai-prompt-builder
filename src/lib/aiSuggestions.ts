@@ -29,7 +29,7 @@ Available theme IDs to choose from: aurora-borealis, neon-noir, minimalist, cosm
 Make sure to provide 3 DIFFERENT designOptions that are well-suited to the domain. Choose theme IDs that match the design style and color mood.`;
 
   try {
-    const response = await spark.llm(prompt, 'gpt-4o', true);
+    const response = await spark.llm(prompt, 'gemini-3.5-flash', true);
     const parsed = JSON.parse(response);
     return parsed;
   } catch (error) {
