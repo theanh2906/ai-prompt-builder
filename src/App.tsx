@@ -1,8 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useKV } from '@github/spark/hooks';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sparkle, Copy, Download, Check } from '@phosphor-icons/react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Copy, Download, Check, Sparkle, SignOut, FolderOpen, FloppyDisk } from '@phosphor-icons/react';
+import { ModeSelector } from '@/components/ModeSelector';
+import { LoginDialog } from '@/components/LoginDialog';
+import { SavedPromptsDialog } from '@/components/SavedPromptsDialog';
+import { SavePromptDialog } from '@/components/SavePromptDialog';
+import { DesignOptionsStep } from '@/components/DesignOptionsStep';
 import { StepProgress } from '@/components/StepProgress';
 import { StepContainer } from '@/components/StepContainer';
 import { PlatformStep } from '@/components/steps/PlatformStep';
@@ -10,19 +17,26 @@ import { DomainStep } from '@/components/steps/DomainStep';
 import { FeaturesStep } from '@/components/steps/FeaturesStep';
 import { DesignStep } from '@/components/steps/DesignStep';
 import { ThemeStep } from '@/components/steps/ThemeStep';
-import { ThemePreview } from '@/components/ThemePreview';
-import { ProjectRequirements, PlatformType, DomainType, DesignStyle, ColorMood } from '@/lib/types';
+import { ProjectRequirements, PlatformType, DomainType, DesignStyle, ColorMood, BuilderMode, SavedPrompt, AISuggestion } from '@/lib/types';
+import { User } from '@/lib/auth';
+import { generateAISuggestions } from '@/lib/aiSuggestions';
 import { getThemeById } from '@/lib/themes';
 import { generatePrompt } from '@/lib/promptGenerator';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
 function App() {
-  const [started, setStarted] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [showSavedPrompts, setShowSavedPrompts] = useState(false);
+  const [showSavePromptDialog, setShowSavePromptDialog] = useState(false);
+  
+  const [mode, setMode] = useState<BuilderMode | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
-  const [showPrompt, setShowPrompt] = useState(false);
+  const [showPromptDialog, setShowPromptDialog] = useState(false);
   const [copied, setCopied] = useState(false);
   const [generatedPrompt, setGeneratedPrompt] = useState('');
+  const [currentPromptId, setCurrentPromptId] = useState<string | null>(null);
   
   const [requirements, setRequirements] = useState<ProjectRequirements>({
     platform: null,
@@ -33,28 +47,82 @@ function App() {
     themeId: null,
   });
 
-  const totalSteps = 6;
+  const [aiSuggestions, setAiSuggestions] = useState<AISuggestion | null>(null);
+  const [selectedDesignOption, setSelectedDesignOption] = useState<number | null>(null);
+  const [loadingAI, setLoadingAI] = useState(false);
 
-  const handleNext = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep((prev) => prev + 1);
+  const [savedPrompts, setSavedPrompts] = useKV<SavedPrompt[]>(`prompts_${user?.id || 'guest'}`, []);
+
+  const totalSteps = mode === 'ai-suggest' ? 3 : 6;
+
+  const handleLogin = (loggedInUser: User) => {
+    setUser(loggedInUser);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setMode(null);
+    setCurrentStep(1);
+    toast.success('Logged out successfully');
+  };
+
+  const handleModeSelect = (selectedMode: BuilderMode) => {
+    setMode(selectedMode);
+  };
+
+  const handleNext = async () => {
+    if (mode === 'ai-suggest') {
+      if (currentStep === 1 && requirements.platform && requirements.domain) {
+        setLoadingAI(true);
+        try {
+          const suggestions = await generateAISuggestions(requirements.platform, requirements.domain);
+          setAiSuggestions(suggestions);
+          setRequirements({ ...requirements, features: suggestions.features });
+          setCurrentStep(2);
+        } catch (error) {
+          toast.error('Failed to get AI suggestions');
+        } finally {
+          setLoadingAI(false);
+        }
+      } else if (currentStep === 2 && selectedDesignOption !== null && aiSuggestions) {
+        const selected = aiSuggestions.designOptions[selectedDesignOption];
+        setRequirements({
+          ...requirements,
+          designStyle: selected.designStyle,
+          colorMood: selected.colorMood,
+          themeId: selected.themeId,
+        });
+        setCurrentStep(3);
+      }
+    } else {
+      if (currentStep < totalSteps) {
+        setCurrentStep((prev) => prev + 1);
+      }
     }
   };
 
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep((prev) => prev - 1);
+    } else if (currentStep === 1) {
+      setMode(null);
+      setRequirements({
+        platform: null,
+        domain: null,
+        features: [],
+        designStyle: null,
+        colorMood: null,
+        themeId: null,
+      });
+      setAiSuggestions(null);
+      setSelectedDesignOption(null);
     }
-  };
-
-  const handleStart = () => {
-    setStarted(true);
   };
 
   const handleGeneratePrompt = () => {
     const prompt = generatePrompt(requirements);
     setGeneratedPrompt(prompt);
-    setShowPrompt(true);
+    setShowPromptDialog(true);
   };
 
   const handleCopyPrompt = () => {
@@ -77,111 +145,249 @@ function App() {
     toast.success('Prompt downloaded!');
   };
 
+  const handleSavePrompt = (name: string) => {
+    const newPrompt: SavedPrompt = {
+      id: currentPromptId || `prompt_${Date.now()}`,
+      name,
+      requirements,
+      prompt: generatedPrompt,
+      mode: mode!,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    setSavedPrompts((current) => {
+      const prompts = current || [];
+      const existing = prompts.findIndex((p) => p.id === newPrompt.id);
+      if (existing >= 0) {
+        const updated = [...prompts];
+        updated[existing] = newPrompt;
+        return updated;
+      }
+      return [...prompts, newPrompt];
+    });
+
+    setCurrentPromptId(newPrompt.id);
+    toast.success(`Prompt saved as "${name}"`);
+  };
+
+  const handleDeletePrompt = (id: string) => {
+    setSavedPrompts((current) => (current || []).filter((p) => p.id !== id));
+  };
+
+  const handleLoadPrompt = (prompt: SavedPrompt) => {
+    setMode(prompt.mode);
+    setRequirements(prompt.requirements);
+    setCurrentStep(prompt.mode === 'ai-suggest' ? 3 : 6);
+    setGeneratedPrompt(prompt.prompt);
+    setCurrentPromptId(prompt.id);
+  };
+
+  const handleOpenSave = () => {
+    if (!user) {
+      setShowLoginDialog(true);
+      return;
+    }
+    setShowSavePromptDialog(true);
+  };
+
   const canProceed = () => {
-    switch (currentStep) {
-      case 1:
-        return requirements.platform !== null;
-      case 2:
-        return requirements.domain !== null;
-      case 3:
-        return requirements.features.length > 0;
-      case 4:
-        return requirements.designStyle !== null && requirements.colorMood !== null;
-      case 5:
-        return requirements.themeId !== null;
-      case 6:
-        return true;
-      default:
-        return false;
+    if (mode === 'ai-suggest') {
+      if (currentStep === 1) return requirements.platform !== null && requirements.domain !== null;
+      if (currentStep === 2) return selectedDesignOption !== null;
+      return true;
+    } else {
+      switch (currentStep) {
+        case 1: return requirements.platform !== null;
+        case 2: return requirements.domain !== null;
+        case 3: return requirements.features.length > 0;
+        case 4: return requirements.designStyle !== null && requirements.colorMood !== null;
+        case 5: return requirements.themeId !== null;
+        case 6: return true;
+        default: return false;
+      }
     }
   };
 
-  const selectedTheme = requirements.themeId ? getThemeById(requirements.themeId) : null;
-
-  if (!started) {
+  if (!mode) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-background via-primary/5 to-accent/10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="max-w-2xl w-full text-center space-y-8"
-        >
-          <div className="space-y-4">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground"
-            >
-              <Sparkle size={40} weight="fill" />
-            </motion.div>
-            <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
-              AI Prompt Builder
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-lg mx-auto">
-              Create comprehensive prompts that generate accurate code with any AI agent - achieve 70%+ accuracy
-            </p>
-          </div>
-
-          <div className="bg-card border-2 border-border rounded-2xl p-8 space-y-6 shadow-lg">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-              <div className="space-y-2">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
-                  1
-                </div>
-                <h3 className="font-semibold">Choose Platform</h3>
-                <p className="text-sm text-muted-foreground">Select your target platform</p>
+      <div className="min-h-screen flex flex-col">
+        <header className="bg-background/95 backdrop-blur-sm border-b border-border">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <Sparkle size={24} weight="fill" className="text-white" />
               </div>
-              <div className="space-y-2">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
-                  2
-                </div>
-                <h3 className="font-semibold">Define Domain</h3>
-                <p className="text-sm text-muted-foreground">Pick your app category</p>
-              </div>
-              <div className="space-y-2">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
-                  3
-                </div>
-                <h3 className="font-semibold">Select Features</h3>
-                <p className="text-sm text-muted-foreground">Choose core functionality</p>
-              </div>
-              <div className="space-y-2">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
-                  4
-                </div>
-                <h3 className="font-semibold">Pick Theme</h3>
-                <p className="text-sm text-muted-foreground">Select color palette & preview</p>
-              </div>
+              <h1 className="text-xl font-bold">AI Prompt Builder</h1>
+            </div>
+            <div className="flex items-center gap-3">
+              {user ? (
+                <>
+                  <Button variant="ghost" size="sm" onClick={() => setShowSavedPrompts(true)}>
+                    <FolderOpen className="mr-2" size={18} />
+                    My Prompts
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="gap-2">
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src={user.avatar} />
+                          <AvatarFallback>{user.name[0]}</AvatarFallback>
+                        </Avatar>
+                        {user.name}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleLogout}>
+                        <SignOut className="mr-2" size={16} />
+                        Sign Out
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              ) : (
+                <Button variant="default" size="sm" onClick={() => setShowLoginDialog(true)}>
+                  Sign In
+                </Button>
+              )}
             </div>
           </div>
+        </header>
 
-          <Button
-            size="lg"
-            onClick={handleStart}
-            className="text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
-          >
-            Start Building Prompt
-          </Button>
-        </motion.div>
+        <div className="flex-1 flex items-center justify-center p-6 bg-gradient-to-br from-background via-primary/5 to-accent/10">
+          <ModeSelector onSelectMode={handleModeSelect} />
+        </div>
+
+        <LoginDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} onLogin={handleLogin} />
+        <SavedPromptsDialog
+          open={showSavedPrompts}
+          onOpenChange={setShowSavedPrompts}
+          savedPrompts={savedPrompts || []}
+          onDelete={handleDeletePrompt}
+          onLoad={handleLoadPrompt}
+        />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-primary/5 to-accent/10">
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 py-6">
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" onClick={() => setMode(null)}>
+              ← Back to Mode Selection
+            </Button>
+          </div>
+          <div className="flex items-center gap-3">
+            {user ? (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => setShowSavedPrompts(true)}>
+                  <FolderOpen className="mr-2" size={18} />
+                  My Prompts
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-2">
+                      <Avatar className="w-6 h-6">
+                        <AvatarImage src={user.avatar} />
+                        <AvatarFallback>{user.name[0]}</AvatarFallback>
+                      </Avatar>
+                      {user.name}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <SignOut className="mr-2" size={16} />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <Button variant="default" size="sm" onClick={() => setShowLoginDialog(true)}>
+                Sign In
+              </Button>
+            )}
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-6 pb-4">
           <StepProgress currentStep={currentStep} totalSteps={totalSteps} />
         </div>
-      </div>
+      </header>
 
       <div className="flex-1 flex items-start justify-center p-6 pb-32 overflow-y-auto">
-        <div className="w-full max-w-7xl">
-          <div className={currentStep === 5 ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : ""}>
-            <div className={currentStep === 5 ? "" : "max-w-4xl mx-auto w-full"}>
-              <StepContainer step={currentStep}>
+        <div className="w-full max-w-4xl">
+          <StepContainer step={currentStep}>
+            {mode === 'ai-suggest' ? (
+              <>
+                {currentStep === 1 && (
+                  <div className="space-y-8">
+                    <PlatformStep
+                      value={requirements.platform}
+                      onChange={(platform: PlatformType) => setRequirements({ ...requirements, platform })}
+                    />
+                    <DomainStep
+                      value={requirements.domain}
+                      onChange={(domain: DomainType) => setRequirements({ ...requirements, domain })}
+                    />
+                  </div>
+                )}
+                {currentStep === 2 && aiSuggestions && (
+                  <DesignOptionsStep
+                    designOptions={aiSuggestions.designOptions}
+                    selectedIndex={selectedDesignOption}
+                    onSelect={setSelectedDesignOption}
+                  />
+                )}
+                {currentStep === 3 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-6"
+                  >
+                    <div className="space-y-2">
+                      <h2 className="text-3xl font-bold tracking-tight">Review & Generate</h2>
+                      <p className="text-muted-foreground text-lg">Your AI-suggested prompt is ready</p>
+                    </div>
+                    <div className="bg-card p-6 rounded-lg border space-y-4">
+                      <div>
+                        <h3 className="font-semibold mb-2">Platform</h3>
+                        <p className="text-muted-foreground capitalize">{requirements.platform}</p>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-2">Domain</h3>
+                        <p className="text-muted-foreground capitalize">{requirements.domain}</p>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-2">Features ({requirements.features.length})</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {requirements.features.slice(0, 6).map((feature, idx) => (
+                            <span key={idx} className="px-3 py-1 bg-secondary text-secondary-foreground rounded-md text-sm">
+                              {feature}
+                            </span>
+                          ))}
+                          {requirements.features.length > 6 && (
+                            <span className="px-3 py-1 bg-muted text-muted-foreground rounded-md text-sm">
+                              +{requirements.features.length - 6} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-2">Theme</h3>
+                        <p className="text-muted-foreground">{getThemeById(requirements.themeId!)?.name}</p>
+                      </div>
+                    </div>
+                    <Button size="lg" onClick={handleGeneratePrompt} className="w-full text-lg py-6">
+                      <Sparkle className="mr-2" size={24} weight="fill" />
+                      Generate AI Prompt
+                    </Button>
+                  </motion.div>
+                )}
+              </>
+            ) : (
+              <>
                 {currentStep === 1 && (
                   <PlatformStep
                     value={requirements.platform}
@@ -223,103 +429,88 @@ function App() {
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
                     className="space-y-6"
                   >
                     <div className="space-y-2">
                       <h2 className="text-3xl font-bold tracking-tight">Review & Generate</h2>
-                      <p className="text-muted-foreground text-lg">
-                        Review your selections and generate the AI prompt
-                      </p>
+                      <p className="text-muted-foreground text-lg">Review your selections and generate the prompt</p>
                     </div>
-
-                    <div className="grid gap-4">
-                      <div className="bg-card p-6 rounded-lg border space-y-4">
-                        <div>
-                          <h3 className="font-semibold mb-2">Platform</h3>
-                          <p className="text-muted-foreground capitalize">{requirements.platform}</p>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold mb-2">Domain</h3>
-                          <p className="text-muted-foreground capitalize">{requirements.domain}</p>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold mb-2">Features ({requirements.features.length})</h3>
-                          <div className="flex flex-wrap gap-2">
-                            {requirements.features.slice(0, 5).map((feature, idx) => (
-                              <span key={idx} className="px-3 py-1 bg-secondary text-secondary-foreground rounded-md text-sm">
-                                {feature}
-                              </span>
-                            ))}
-                            {requirements.features.length > 5 && (
-                              <span className="px-3 py-1 bg-muted text-muted-foreground rounded-md text-sm">
-                                +{requirements.features.length - 5} more
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold mb-2">Design Style</h3>
-                          <p className="text-muted-foreground capitalize">{requirements.designStyle} / {requirements.colorMood}</p>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold mb-2">Theme</h3>
-                          <p className="text-muted-foreground">{selectedTheme?.name || 'None selected'}</p>
+                    <div className="bg-card p-6 rounded-lg border space-y-4">
+                      <div>
+                        <h3 className="font-semibold mb-2">Platform</h3>
+                        <p className="text-muted-foreground capitalize">{requirements.platform}</p>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-2">Domain</h3>
+                        <p className="text-muted-foreground capitalize">{requirements.domain}</p>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-2">Features ({requirements.features.length})</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {requirements.features.slice(0, 6).map((feature, idx) => (
+                            <span key={idx} className="px-3 py-1 bg-secondary text-secondary-foreground rounded-md text-sm">
+                              {feature}
+                            </span>
+                          ))}
+                          {requirements.features.length > 6 && (
+                            <span className="px-3 py-1 bg-muted text-muted-foreground rounded-md text-sm">
+                              +{requirements.features.length - 6} more
+                            </span>
+                          )}
                         </div>
                       </div>
+                      <div>
+                        <h3 className="font-semibold mb-2">Design Style</h3>
+                        <p className="text-muted-foreground capitalize">{requirements.designStyle} / {requirements.colorMood}</p>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-2">Theme</h3>
+                        <p className="text-muted-foreground">{getThemeById(requirements.themeId!)?.name}</p>
+                      </div>
                     </div>
-
-                    <Button
-                      size="lg"
-                      onClick={handleGeneratePrompt}
-                      className="w-full text-lg py-6"
-                    >
+                    <Button size="lg" onClick={handleGeneratePrompt} className="w-full text-lg py-6">
                       <Sparkle className="mr-2" size={24} weight="fill" />
                       Generate AI Prompt
                     </Button>
                   </motion.div>
                 )}
-              </StepContainer>
-            </div>
-
-            {currentStep === 5 && (
-              <div className="hidden lg:block">
-                <div className="sticky top-24">
-                  <ThemePreview theme={selectedTheme || null} />
-                </div>
-              </div>
+              </>
             )}
-          </div>
+          </StepContainer>
         </div>
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between gap-4">
-          <Button
-            variant="outline"
-            onClick={handleBack}
-            disabled={currentStep === 1}
-            className="min-w-24"
-          >
+          <Button variant="outline" onClick={handleBack} className="min-w-24">
             Back
           </Button>
-          <Button
-            onClick={handleNext}
-            disabled={!canProceed() || currentStep === totalSteps}
-            className="min-w-24"
-          >
-            Continue
-          </Button>
+          {currentStep < totalSteps ? (
+            <Button onClick={handleNext} disabled={!canProceed() || loadingAI} className="min-w-24">
+              {loadingAI ? 'Getting AI Suggestions...' : 'Continue'}
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleOpenSave}>
+                <FloppyDisk className="mr-2" size={18} />
+                Save
+              </Button>
+              <Button onClick={handleGeneratePrompt}>
+                <Sparkle className="mr-2" size={18} weight="fill" />
+                Generate
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
-      <Dialog open={showPrompt} onOpenChange={setShowPrompt}>
+      <Dialog open={showPromptDialog} onOpenChange={setShowPromptDialog}>
         <DialogContent className="max-w-4xl h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
           <div className="px-6 pt-6 pb-4 shrink-0 border-b">
             <DialogHeader>
               <DialogTitle className="text-2xl">Your AI Prompt is Ready!</DialogTitle>
               <DialogDescription>
-                Copy this prompt and paste it into any AI code generation tool for best results
+                Copy this prompt and paste it into any AI code generation tool
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -342,13 +533,31 @@ function App() {
                 </>
               )}
             </Button>
-            <Button onClick={handleDownloadPrompt} className="flex-1">
+            <Button onClick={handleDownloadPrompt} variant="outline" className="flex-1">
               <Download className="mr-2" size={18} />
               Download (.md)
+            </Button>
+            <Button onClick={handleOpenSave} className="flex-1">
+              <FloppyDisk className="mr-2" size={18} />
+              Save Prompt
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      <LoginDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} onLogin={handleLogin} />
+      <SavedPromptsDialog
+        open={showSavedPrompts}
+        onOpenChange={setShowSavedPrompts}
+        savedPrompts={savedPrompts || []}
+        onDelete={handleDeletePrompt}
+        onLoad={handleLoadPrompt}
+      />
+      <SavePromptDialog
+        open={showSavePromptDialog}
+        onOpenChange={setShowSavePromptDialog}
+        onSave={handleSavePrompt}
+      />
     </div>
   );
 }

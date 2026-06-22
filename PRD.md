@@ -1,37 +1,52 @@
 # Planning Guide
 
-A prompt builder tool that helps developers construct high-quality, comprehensive prompts for AI code generation agents, ensuring at least 70% accuracy in generating the expected output.
+A prompt builder tool that helps developers construct high-quality, comprehensive prompts for AI code generation agents, ensuring at least 70% accuracy in generating the expected output. Features dual-mode building (AI-assisted and Expert), user authentication, and saved prompt management.
 
 **Experience Qualities**: 
 1. **Precise** - Every selection contributes to a specific, actionable prompt element that directly influences code generation
-2. **Visual** - Live theme preview allows users to see exactly what their color choices will look like before generating the prompt
-3. **Efficient** - Streamlined multi-step process guides users from concept to complete prompt in minutes
+2. **Visual** - Theme cards with color mockups allow users to see what their color choices will represent
+3. **Efficient** - Streamlined multi-step process guides users from concept to complete prompt in minutes, with AI mode making it even faster
+4. **Personal** - Authentication and saved prompts let users build a library of reusable prompts
 
-**Complexity Level**: Light Application (multiple features with basic state)
-This is a guided form-based tool with state management across steps, theme preview functionality, and prompt generation logic. It doesn't require authentication, backend APIs, or complex data relationships.
+**Complexity Level**: Complex Application (advanced functionality with multiple views)
+This application includes user authentication via OAuth providers, persistent data storage per user, dual-mode workflows (AI-suggested vs Expert), and prompt management features including save, edit, and delete operations.
 
 ## Essential Features
 
-### Multi-Step Requirement Collection
+### User Authentication
+- **Functionality**: OAuth-based login supporting Google, Facebook, and LinkedIn
+- **Purpose**: Secure user identification for persisting saved prompts across sessions
+- **Trigger**: User clicks login button or attempts to save a prompt
+- **Progression**: Login button click → Provider selection modal → OAuth flow → Redirect back → User authenticated
+- **Success criteria**: User can log in with any supported provider, session persists across page refreshes, logout works correctly
+
+### Dual-Mode Builder System
+- **Functionality**: Two distinct workflows - AI Suggest mode (platform + domain → AI generates features/themes) and Expert mode (manual step-by-step configuration)
+- **Purpose**: AI mode accelerates prompt creation for common use cases; Expert mode provides full control for specific requirements
+- **Trigger**: User selects mode on welcome screen after authentication
+- **Progression**: Mode selection → AI: 2 steps (platform, domain) / Expert: 6 steps (full wizard) → Generate prompt
+- **Success criteria**: AI mode completes in 2 steps with 3 design suggestions; Expert mode provides full granular control
+
+### AI-Suggested Features & Themes
+- **Functionality**: Based on platform + domain selection, AI suggests relevant features and generates 3 distinct theme/design combinations with visual previews
+- **Purpose**: Eliminates decision fatigue and provides professional starting points
+- **Trigger**: User completes platform and domain selection in AI Suggest mode
+- **Progression**: Platform + domain selected → AI analyzes → Returns features list + 3 theme options → User picks one → Generate
+- **Success criteria**: AI returns results within 3 seconds, suggestions are relevant to domain, 3 distinct themes with styled preview cards
+
+### Multi-Step Requirement Collection (Expert Mode)
 - **Functionality**: Guided wizard interface collecting platform, domain, features, and design preferences
 - **Purpose**: Structures user input into organized sections that map to prompt components
-- **Trigger**: User clicks "Start New Project" button
-- **Progression**: Welcome screen → Platform selection → Domain selection → Features selection → Design style → Theme selection → Summary/Generate
+- **Trigger**: User selects Expert mode
+- **Progression**: Platform selection → Domain selection → Features selection → Design style → Theme selection → Summary/Generate
 - **Success criteria**: Users can navigate forward/backward, selections persist, progress indicator shows current position
 
 ### Theme Selection System (20 Presets)
-- **Functionality**: Visual theme selector with 20 pre-configured color palettes inspired by GitHub Spark's theme system
+- **Functionality**: Visual theme selector with 20 pre-configured color palettes, shown as styled mockup cards
 - **Purpose**: Provides professional, tested color combinations that users can specify in their prompt
-- **Trigger**: User reaches the theme selection step in the wizard
-- **Progression**: User views theme grid → Filters/searches themes → Selects theme → Sees live preview → Confirms selection
-- **Success criteria**: Theme preview accurately represents the color scheme; selected theme is included in final prompt
-
-### Live Theme Preview Window
-- **Functionality**: Real-time preview panel showing how selected theme looks on actual UI components
-- **Purpose**: Eliminates guesswork by showing visual representation of color choices
-- **Trigger**: User selects a theme from the theme picker
-- **Progression**: Theme selected → Preview updates instantly → Shows buttons, cards, inputs with applied colors
-- **Success criteria**: Preview renders within 100ms of selection, accurately displays all theme colors on various component states
+- **Trigger**: User reaches theme selection step (Expert mode) or reviews AI suggestions (AI mode)
+- **Progression**: User views theme grid → Selects theme → Sees theme details on card → Confirms selection
+- **Success criteria**: Theme cards show accurate color representation; selected theme is included in final prompt
 
 ### Prompt Generation Engine
 - **Functionality**: Converts all user selections into a comprehensive, structured prompt optimized for AI code generators
@@ -40,20 +55,31 @@ This is a guided form-based tool with state management across steps, theme previ
 - **Progression**: Collect all selections → Format into sections → Include theme specifics → Generate complete prompt → Display in modal
 - **Success criteria**: Generated prompt is copy-ready, includes all selections, follows best practices for AI prompting
 
+### Save & Manage Prompts
+- **Functionality**: Save generated prompts with custom names, view saved prompts library, edit/regenerate, and delete prompts
+- **Purpose**: Build reusable prompt library for common project types
+- **Trigger**: User clicks "Save Prompt" after generation, or clicks "My Prompts" in navigation
+- **Progression**: Save: Name prompt → Store with user ID → Confirmation. View: Load prompts list → Click to view/edit → Regenerate or delete
+- **Success criteria**: Prompts persist per user account, can be loaded and edited, deletions are confirmed
+
 ### Prompt Output Actions
-- **Functionality**: Copy to clipboard and download as .txt options for generated prompt
+- **Functionality**: Copy to clipboard and download as .md options for generated prompt
 - **Purpose**: Easy export of final prompt for use in any AI code generation tool
 - **Trigger**: User views generated prompt in modal
 - **Progression**: Prompt displayed → User clicks Copy/Download → Confirmation feedback → Prompt ready to use
-- **Success criteria**: Copy works across browsers, download creates properly formatted .txt file, toast confirmation appears
+- **Success criteria**: Copy works across browsers, download creates properly formatted .md file, toast confirmation appears
 
 ## Edge Case Handling
 
 - **No selections made**: Continue button disabled until minimum requirements met for each step
-- **Browser back button**: State persists, user returns to current step without data loss
-- **Theme search with no results**: Shows "No themes found" message with clear filters option
+- **Unauthenticated user tries to save**: Prompt login modal, redirect to auth flow, return to save after login
+- **AI suggestion timeout**: Show fallback generic features, allow manual selection
+- **Saved prompts limit**: No artificial limit (uses Spark KV storage per user)
+- **Network failures during OAuth**: Show error message, provide retry button
 - **Very long feature lists**: Scroll container with max height, clear visual indication of scrollable area
-- **Mobile viewport**: Theme preview adapts to smaller screen, potentially stacks side-by-side layout vertically
+- **Mobile viewport**: Theme cards adapt to single column, mode selector stacks vertically
+- **Duplicate prompt names**: Allow duplicates but show creation timestamp for differentiation
+- **Deleted OAuth provider account**: User can't log in; show error message suggesting alternative provider
 
 ## Design Direction
 
