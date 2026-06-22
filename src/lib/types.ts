@@ -56,3 +56,24 @@ export interface FormStep {
   description: string;
   completed: boolean;
 }
+
+export type BuilderMode = 'ai-suggest' | 'expert';
+
+export interface SavedPrompt {
+  id: string;
+  name: string;
+  requirements: ProjectRequirements;
+  prompt: string;
+  mode: BuilderMode;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface AISuggestion {
+  features: string[];
+  designOptions: {
+    designStyle: DesignStyle;
+    colorMood: ColorMood;
+    themeId: string;
+  }[];
+}

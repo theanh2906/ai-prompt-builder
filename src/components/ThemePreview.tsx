@@ -7,9 +7,10 @@ import { motion } from 'framer-motion';
 
 interface ThemePreviewProps {
   theme: Theme | null;
+  compact?: boolean;
 }
 
-export function ThemePreview({ theme }: ThemePreviewProps) {
+export function ThemePreview({ theme, compact = false }: ThemePreviewProps) {
   if (!theme) {
     return (
       <Card className="p-8 h-full flex items-center justify-center">
@@ -17,6 +18,42 @@ export function ThemePreview({ theme }: ThemePreviewProps) {
           <p>Select a theme to see a preview</p>
         </div>
       </Card>
+    );
+  }
+
+  if (compact) {
+    return (
+      <div className="space-y-3">
+        <div className="flex gap-2">
+          {['primary', 'secondary', 'accent'].map((key) => (
+            <div
+              key={key}
+              className="flex-1 h-12 rounded-md border"
+              style={{ backgroundColor: theme.colors[key as keyof typeof theme.colors] }}
+            />
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <button
+            className="flex-1 px-3 py-1.5 rounded-md font-medium text-xs"
+            style={{
+              backgroundColor: theme.colors.primary,
+              color: theme.colors.background,
+            }}
+          >
+            Primary
+          </button>
+          <button
+            className="flex-1 px-3 py-1.5 rounded-md font-medium text-xs"
+            style={{
+              backgroundColor: theme.colors.accent,
+              color: theme.colors.background,
+            }}
+          >
+            Accent
+          </button>
+        </div>
+      </div>
     );
   }
 
