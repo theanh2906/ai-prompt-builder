@@ -58,8 +58,8 @@ This application includes user authentication via OAuth providers, persistent da
 ### Save & Manage Prompts
 - **Functionality**: Save generated prompts with custom names, view saved prompts library, edit/regenerate, and delete prompts
 - **Purpose**: Build reusable prompt library for common project types
-- **Trigger**: User clicks "Save Prompt" after generation, or clicks "My Prompts" in navigation
-- **Progression**: Save: Name prompt → Store with user ID → Confirmation. View: Load prompts list → Click to view/edit → Regenerate or delete
+The design should feel like a professional developer tool - clean, efficient, and trustworthy. It should communicate precision and capability while remaining approachable. The interface should feel modern and aligned with contemporary development tools, with subtle animations that guide attention without distraction.
+
 - **Success criteria**: Prompts persist per user account, can be loaded and edited, deletions are confirmed
 
 ### Prompt Output Actions
