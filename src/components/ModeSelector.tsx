@@ -1,19 +1,23 @@
 import { motion } from 'framer-motion';
 import { Sparkle, Sliders } from '@phosphor-icons/react';
-import { BuilderMode } from '@/lib/types';
+import { Button } from '@/components/ui/button';
 import { BuilderMode } from '@/lib/types';
 
+interface ModeSelectorProps {
+  onSelectMode: (mode: BuilderMode) => void;
+}
+
+export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
   return (
-      <div className="text-center space-y-6"
- 
-
-        >
-        </
-          Choose Your Building Mode
-        <p className="text-xl text-muted-fore
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full max-w-5xl space-y-12"
+    >
+      <div className="text-center space-y-6">
         <motion.div
-
-        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
           className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground"
         >
@@ -30,19 +34,19 @@ import { BuilderMode } from '@/lib/types';
       <div className="grid md:grid-cols-2 gap-6">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
-                </div>
+          animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
-         
+        >
           <Button
-                  <p classNam
-              </div>
+            variant="outline"
+            onClick={() => onSelectMode('ai-suggest')}
             className="w-full h-auto p-0 hover:border-accent hover:shadow-lg hover:bg-accent/5 transition-all group"
           >
             <div className="w-full p-8 space-y-6 text-left">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-accent to-accent/60 flex items-center justify-center">
                   <Sparkle size={28} weight="fill" className="text-white" />
-          animate={{ o
+                </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-2xl font-bold">AI Suggest Mode</h3>
                   <p className="text-muted-foreground">Fast & intelligent</p>
@@ -74,78 +78,70 @@ import { BuilderMode } from '@/lib/types';
                 </div>
               </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+              <div className="pt-4 border-t">
+                <div className="inline-flex items-center gap-2 text-sm font-medium text-accent">
+                  Get started →
+                </div>
+              </div>
+            </div>
+          </Button>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <Button
+            variant="outline"
+            onClick={() => onSelectMode('expert')}
+            className="w-full h-auto p-0 hover:border-primary hover:shadow-lg hover:bg-primary/5 transition-all group"
+          >
+            <div className="w-full p-8 space-y-6 text-left">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+                  <Sliders size={28} weight="fill" className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-2xl font-bold">Expert Mode</h3>
+                  <p className="text-muted-foreground">Full control</p>
+                </div>
+              </div>
+
+              <p className="text-muted-foreground break-words leading-relaxed overflow-wrap-anywhere">
+                Take the reins and customize every detail. Step through platform, domain, features, design style, and theme selections.
+              </p>
+
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-primary text-sm font-bold">1</span>
+                  </div>
+                  <p className="text-sm">Choose platform</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-primary text-sm font-bold">2</span>
+                  </div>
+                  <p className="text-sm">Select domain and features</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-primary text-sm font-bold">3</span>
+                  </div>
+                  <p className="text-sm">Pick design style and theme</p>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t">
+                <div className="inline-flex items-center gap-2 text-sm font-medium text-primary">
+                  Get started →
+                </div>
+              </div>
+            </div>
+          </Button>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+}
