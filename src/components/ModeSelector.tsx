@@ -39,7 +39,7 @@ export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
         >
           <Button
             variant="outline"
-            className="w-full h-auto p-0 hover:border-accent hover:shadow-lg transition-all group"
+            className="w-full h-auto p-0 hover:border-accent hover:shadow-lg hover:bg-accent/5 transition-all group"
             onClick={() => onSelectMode('ai-suggest')}
           >
             <div className="w-full p-8 space-y-6 text-left">
@@ -47,13 +47,13 @@ export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-accent to-accent/60 flex items-center justify-center">
                   <Sparkle size={28} weight="fill" className="text-white" />
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <h3 className="text-2xl font-bold">AI Suggest Mode</h3>
                   <p className="text-muted-foreground">Fast & intelligent</p>
                 </div>
               </div>
 
-              <p className="text-muted-foreground break-words">
+              <p className="text-muted-foreground break-words leading-relaxed">
                 Let AI do the heavy lifting. Just pick your platform and domain, and get instant feature suggestions plus 3 design options.
               </p>
 
@@ -92,7 +92,7 @@ export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
         >
           <Button
             variant="outline"
-            className="w-full h-auto p-0 hover:border-primary hover:shadow-lg transition-all group"
+            className="w-full h-auto p-0 hover:border-primary hover:shadow-lg hover:bg-primary/5 transition-all group"
             onClick={() => onSelectMode('expert')}
           >
             <div className="w-full p-8 space-y-6 text-left">
@@ -100,13 +100,13 @@ export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
                   <UserCircle size={28} weight="fill" className="text-white" />
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <h3 className="text-2xl font-bold">Expert Mode</h3>
                   <p className="text-muted-foreground">Full control</p>
                 </div>
               </div>
 
-              <p className="text-muted-foreground break-words">
+              <p className="text-muted-foreground break-words leading-relaxed">
                 Take complete control over every detail. Manually select all features, design styles, and themes through a guided wizard.
               </p>
 
