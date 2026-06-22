@@ -41,7 +41,7 @@ export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
           <Button
             variant="outline"
             onClick={() => onSelectMode('ai-suggest')}
-            className="w-full h-auto p-0 hover:border-accent hover:shadow-lg hover:bg-accent/5 transition-all group"
+            className="w-full h-auto p-0 hover:border-accent hover:shadow-lg hover:bg-accent/5 transition-all group whitespace-normal"
           >
             <div className="w-full p-8 space-y-6 text-left">
               <div className="flex items-center gap-4">
@@ -96,7 +96,7 @@ export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
           <Button
             variant="outline"
             onClick={() => onSelectMode('expert')}
-            className="w-full h-auto p-0 hover:border-primary hover:shadow-lg hover:bg-primary/5 transition-all group"
+            className="w-full h-auto p-0 hover:border-primary hover:shadow-lg hover:bg-primary/5 transition-all group whitespace-normal"
           >
             <div className="w-full p-8 space-y-6 text-left">
               <div className="flex items-center gap-4">

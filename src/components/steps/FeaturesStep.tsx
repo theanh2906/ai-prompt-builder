@@ -59,7 +59,7 @@ Return the result as JSON in the following format:
   ]
 }`;
 
-      const result = await window.spark.llm(promptText, "gpt-4o", true);
+      const result = await window.spark.llm(promptText, "gemini-3.5-flash", true);
       const parsedResult = JSON.parse(result);
 
       if (parsedResult.features && Array.isArray(parsedResult.features)) {
