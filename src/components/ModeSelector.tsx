@@ -53,7 +53,7 @@ export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
                 </div>
               </div>
 
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground break-words">
                 Let AI do the heavy lifting. Just pick your platform and domain, and get instant feature suggestions plus 3 design options.
               </p>
 
@@ -106,7 +106,7 @@ export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
                 </div>
               </div>
 
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground break-words">
                 Take complete control over every detail. Manually select all features, design styles, and themes through a guided wizard.
               </p>
 
