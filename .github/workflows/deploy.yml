@@ -35,8 +35,9 @@ jobs:
         run: |
           # Sanitize branch name once for reuse in base path and destination dir
           BRANCH="${{ github.ref_name }}"
-          SAFE_BRANCH="${BRANCH//\//-}"
-          echo "safe_branch=${SAFE_BRANCH}" >> $GITHUB_OUTPUT
+          SAFE_BRANCH="$(printf '%s' "$BRANCH" | sed -E 's#[^A-Za-z0-9._-]+#-#g')"
+          [ -n "$SAFE_BRANCH" ] || SAFE_BRANCH="preview"
+          echo "safe_branch=${SAFE_BRANCH}" >> "$GITHUB_OUTPUT"
           if [ "$BRANCH" = "main" ]; then
             echo "path=/ai-prompt-builder/" >> $GITHUB_OUTPUT
           else
