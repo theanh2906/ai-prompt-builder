@@ -36,7 +36,7 @@ export function DesignOptionsStep({ designOptions, selectedIndex, onSelect }: De
             >
               <Button
                 variant="outline"
-                className={`w-full h-auto p-0 hover:shadow-lg transition-all ${
+                className={`w-full h-auto p-0 hover:shadow-lg transition-all whitespace-normal ${
                   isSelected ? 'border-2 border-accent shadow-lg' : ''
                 }`}
                 onClick={() => onSelect(index)}
