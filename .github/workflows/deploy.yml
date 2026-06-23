@@ -28,12 +28,13 @@ jobs:
       - name: Determine base path
         id: base
         run: |
-          if [ "${{ github.ref_name }}" = "main" ]; then
+          # Sanitize branch name once for reuse in base path and destination dir
+          BRANCH="${{ github.ref_name }}"
+          SAFE_BRANCH="${BRANCH//\//-}"
+          echo "safe_branch=${SAFE_BRANCH}" >> $GITHUB_OUTPUT
+          if [ "$BRANCH" = "main" ]; then
             echo "path=/ai-prompt-builder/" >> $GITHUB_OUTPUT
           else
-            # Sanitize branch name for use in URL path
-            BRANCH="${{ github.ref_name }}"
-            SAFE_BRANCH="${BRANCH//\//-}"
             echo "path=/ai-prompt-builder/preview/${SAFE_BRANCH}/" >> $GITHUB_OUTPUT
           fi
 
@@ -54,13 +55,8 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          # keep_files preserves preview/* subdirectories when redeploying main
           keep_files: true
-
-      - name: Set safe branch name
-        if: github.ref_name != 'main'
-        run: |
-          BRANCH="${{ github.ref_name }}"
-          echo "SAFE_BRANCH=${BRANCH//\//-}" >> $GITHUB_ENV
 
       - name: Deploy preview to subdirectory
         if: github.ref_name != 'main'
@@ -68,5 +64,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
-          destination_dir: preview/${{ env.SAFE_BRANCH }}
+          destination_dir: preview/${{ steps.base.outputs.safe_branch }}
           keep_files: true
