@@ -67,7 +67,9 @@ function App() {
   };
 
   const handleLogout = () => {
-    signOutUser().catch(() => undefined);
+    signOutUser().catch(() => {
+      toast.error('Sign out failed. Please try again.');
+    });
     setUser(null);
     setMode(null);
     setCurrentStep(1);

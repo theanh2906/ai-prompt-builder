@@ -50,8 +50,10 @@ export function LoginDialog({ open, onOpenChange, onLogin }: LoginDialogProps) {
       let user: User;
       if (provider === 'google') {
         user = await signInWithGoogle();
-      } else {
+      } else if (provider === 'facebook') {
         user = await signInWithFacebook();
+      } else {
+        throw new Error(`Unsupported provider: ${provider}`);
       }
       onLogin(user);
       onOpenChange(false);

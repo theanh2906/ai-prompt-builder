@@ -8,7 +8,7 @@ import {
   User as FirebaseUser,
 } from 'firebase/auth';
 
-export type AuthProvider = 'google' | 'facebook' | 'linkedin';
+export type AuthProvider = 'google' | 'facebook';
 
 export interface User {
   id: string;
@@ -53,8 +53,16 @@ export function subscribeToAuthChanges(callback: (user: User | null) => void): (
       return;
     }
     const providerId = firebaseUser.providerData[0]?.providerId;
-    let provider: AuthProvider = 'google';
-    if (providerId === 'facebook.com') provider = 'facebook';
+    let provider: AuthProvider;
+    if (providerId === 'google.com') {
+      provider = 'google';
+    } else if (providerId === 'facebook.com') {
+      provider = 'facebook';
+    } else {
+      // Unsupported provider — treat session as signed out
+      callback(null);
+      return;
+    }
     callback(mapFirebaseUser(firebaseUser, provider));
   });
 }
