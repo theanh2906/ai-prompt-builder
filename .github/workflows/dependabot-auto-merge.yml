@@ -14,34 +14,47 @@ permissions:
 
 jobs:
   auto-approve-and-enable-merge:
-    if: github.actor == 'dependabot[bot]' && github.event.pull_request.user.login == 'dependabot[bot]'
+    if: github.actor == 'dependabot[bot]' && github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository && startsWith(github.event.pull_request.head.ref, 'dependabot/')
     runs-on: ubuntu-latest
+    env:
+      MERGE_METHOD: SQUASH
     steps:
       - name: Approve pull request
         uses: actions/github-script@v7
         with:
           script: |
-            await github.rest.pulls.createReview({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              event: "APPROVE"
-            });
+            try {
+              await github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                event: "APPROVE"
+              });
+            } catch (error) {
+              core.warning(`Skipping approval: ${error.message}`);
+            }
 
       - name: Enable auto-merge
         uses: actions/github-script@v7
         with:
           script: |
             const prNodeId = context.payload.pull_request.node_id;
-            await github.graphql(`
-              mutation($pullRequestId: ID!) {
-                enablePullRequestAutoMerge(input: {
-                  pullRequestId: $pullRequestId,
-                  mergeMethod: SQUASH
-                }) {
-                  pullRequest {
-                    number
+            try {
+              await github.graphql(`
+                mutation($pullRequestId: ID!, $mergeMethod: PullRequestMergeMethod!) {
+                  enablePullRequestAutoMerge(input: {
+                    pullRequestId: $pullRequestId,
+                    mergeMethod: $mergeMethod
+                  }) {
+                    pullRequest {
+                      number
+                    }
                   }
                 }
-              }
-            `, { pullRequestId: prNodeId });
+              `, {
+                pullRequestId: prNodeId,
+                mergeMethod: process.env.MERGE_METHOD
+              });
+            } catch (error) {
+              core.warning(`Skipping auto-merge enablement: ${error.message}`);
+            }
