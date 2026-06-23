@@ -52,7 +52,12 @@ export function subscribeToAuthChanges(callback: (user: User | null) => void): (
       callback(null);
       return;
     }
-    const providerId = firebaseUser.providerData[0]?.providerId;
+    const providerData = firebaseUser.providerData;
+    if (!providerData.length) {
+      callback(null);
+      return;
+    }
+    const providerId = providerData[0].providerId;
     let provider: AuthProvider;
     if (providerId === 'google.com') {
       provider = 'google';

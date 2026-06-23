@@ -67,13 +67,15 @@ function App() {
   };
 
   const handleLogout = () => {
-    signOutUser().catch(() => {
-      toast.error('Sign out failed. Please try again.');
-    });
-    setUser(null);
-    setMode(null);
-    setCurrentStep(1);
-    toast.success('Logged out successfully');
+    signOutUser()
+      .then(() => {
+        setMode(null);
+        setCurrentStep(1);
+        toast.success('Logged out successfully');
+      })
+      .catch(() => {
+        toast.error('Sign out failed. Please try again.');
+      });
   };
 
   const handleModeSelect = (selectedMode: BuilderMode) => {

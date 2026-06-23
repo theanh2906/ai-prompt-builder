@@ -10,9 +10,9 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-if (!firebaseConfig.apiKey || !firebaseConfig.appId) {
+if (!firebaseConfig.apiKey || !firebaseConfig.appId || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
   console.warn(
-    'Firebase env vars missing. Please set VITE_FIREBASE_API_KEY and VITE_FIREBASE_APP_ID in your .env.local file.'
+    'Firebase config is incomplete. Please set all VITE_FIREBASE_* variables in your .env.local file.'
   );
 }
 
