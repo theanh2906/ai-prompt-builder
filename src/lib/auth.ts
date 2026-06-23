@@ -19,13 +19,14 @@ export interface User {
 }
 
 function mapFirebaseUser(firebaseUser: FirebaseUser, provider: AuthProvider): User {
+  const displayName = firebaseUser.displayName || firebaseUser.email || 'User';
   return {
     id: firebaseUser.uid,
-    name: firebaseUser.displayName || firebaseUser.email || 'User',
+    name: displayName,
     email: firebaseUser.email || '',
     avatar:
       firebaseUser.photoURL ||
-      `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || 'User')}&background=random`,
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`,
     provider,
   };
 }
@@ -57,17 +58,18 @@ export function subscribeToAuthChanges(callback: (user: User | null) => void): (
       callback(null);
       return;
     }
-    const providerId = providerData[0].providerId;
-    let provider: AuthProvider;
-    if (providerId === 'google.com') {
-      provider = 'google';
-    } else if (providerId === 'facebook.com') {
-      provider = 'facebook';
-    } else {
-      // Unsupported provider — treat session as signed out
+    const supportedProviders: Record<string, AuthProvider> = {
+      'google.com': 'google',
+      'facebook.com': 'facebook',
+    };
+    const matchedEntry = providerData
+      .map((pd) => supportedProviders[pd.providerId])
+      .find((p): p is AuthProvider => p !== undefined);
+    if (!matchedEntry) {
+      // No supported provider found — treat session as signed out
       callback(null);
       return;
     }
-    callback(mapFirebaseUser(firebaseUser, provider));
+    callback(mapFirebaseUser(firebaseUser, matchedEntry));
   });
 }

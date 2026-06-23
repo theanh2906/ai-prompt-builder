@@ -56,8 +56,8 @@ function App() {
   const totalSteps = mode === 'ai-suggest' ? 3 : 6;
 
   useEffect(() => {
-    const unsubscribe = subscribeToAuthChanges((firebaseUser) => {
-      setUser(firebaseUser);
+    const unsubscribe = subscribeToAuthChanges((appUser) => {
+      setUser(appUser);
     });
     return unsubscribe;
   }, []);
