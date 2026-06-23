@@ -18,7 +18,7 @@ import { FeaturesStep } from '@/components/steps/FeaturesStep';
 import { DesignStep } from '@/components/steps/DesignStep';
 import { ThemeStep } from '@/components/steps/ThemeStep';
 import { ProjectRequirements, PlatformType, DomainType, DesignStyle, ColorMood, BuilderMode, SavedPrompt, AISuggestion } from '@/lib/types';
-import { User } from '@/lib/auth';
+import { User, signOutUser, subscribeToAuthChanges } from '@/lib/auth';
 import { generateAISuggestions } from '@/lib/aiSuggestions';
 import { getThemeById } from '@/lib/themes';
 import { generatePrompt } from '@/lib/promptGenerator';
@@ -55,15 +55,27 @@ function App() {
 
   const totalSteps = mode === 'ai-suggest' ? 3 : 6;
 
+  useEffect(() => {
+    const unsubscribe = subscribeToAuthChanges((appUser) => {
+      setUser(appUser);
+    });
+    return unsubscribe;
+  }, []);
+
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser);
   };
 
   const handleLogout = () => {
-    setUser(null);
-    setMode(null);
-    setCurrentStep(1);
-    toast.success('Logged out successfully');
+    signOutUser()
+      .then(() => {
+        setMode(null);
+        setCurrentStep(1);
+        toast.success('Logged out successfully');
+      })
+      .catch(() => {
+        toast.error('Sign out failed. Please try again.');
+      });
   };
 
   const handleModeSelect = (selectedMode: BuilderMode) => {
