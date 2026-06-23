@@ -1,3 +1,13 @@
+import { auth } from '@/config/firebase';
+import {
+  GoogleAuthProvider,
+  FacebookAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  User as FirebaseUser,
+} from 'firebase/auth';
+
 export type AuthProvider = 'google' | 'facebook' | 'linkedin';
 
 export interface User {
@@ -8,32 +18,43 @@ export interface User {
   provider: AuthProvider;
 }
 
-export async function simulateOAuthLogin(provider: AuthProvider): Promise<User> {
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  const mockUsers: Record<AuthProvider, User> = {
-    google: {
-      id: `google_${Date.now()}`,
-      name: 'Google User',
-      email: 'user@gmail.com',
-      avatar: `https://ui-avatars.com/api/?name=Google+User&background=4285F4&color=fff`,
-      provider: 'google',
-    },
-    facebook: {
-      id: `facebook_${Date.now()}`,
-      name: 'Facebook User',
-      email: 'user@facebook.com',
-      avatar: `https://ui-avatars.com/api/?name=Facebook+User&background=1877F2&color=fff`,
-      provider: 'facebook',
-    },
-    linkedin: {
-      id: `linkedin_${Date.now()}`,
-      name: 'LinkedIn User',
-      email: 'user@linkedin.com',
-      avatar: `https://ui-avatars.com/api/?name=LinkedIn+User&background=0A66C2&color=fff`,
-      provider: 'linkedin',
-    },
+function mapFirebaseUser(firebaseUser: FirebaseUser, provider: AuthProvider): User {
+  return {
+    id: firebaseUser.uid,
+    name: firebaseUser.displayName || firebaseUser.email || 'User',
+    email: firebaseUser.email || '',
+    avatar:
+      firebaseUser.photoURL ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || 'User')}&background=random`,
+    provider,
   };
-  
-  return mockUsers[provider];
+}
+
+export async function signInWithGoogle(): Promise<User> {
+  const provider = new GoogleAuthProvider();
+  const result = await signInWithPopup(auth, provider);
+  return mapFirebaseUser(result.user, 'google');
+}
+
+export async function signInWithFacebook(): Promise<User> {
+  const provider = new FacebookAuthProvider();
+  const result = await signInWithPopup(auth, provider);
+  return mapFirebaseUser(result.user, 'facebook');
+}
+
+export async function signOutUser(): Promise<void> {
+  return signOut(auth);
+}
+
+export function subscribeToAuthChanges(callback: (user: User | null) => void): () => void {
+  return onAuthStateChanged(auth, (firebaseUser) => {
+    if (!firebaseUser) {
+      callback(null);
+      return;
+    }
+    const providerId = firebaseUser.providerData[0]?.providerId;
+    let provider: AuthProvider = 'google';
+    if (providerId === 'facebook.com') provider = 'facebook';
+    callback(mapFirebaseUser(firebaseUser, provider));
+  });
 }

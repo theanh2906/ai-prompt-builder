@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { AuthProvider, simulateOAuthLogin, User } from '@/lib/auth';
+import { AuthProvider, signInWithGoogle, signInWithFacebook, User } from '@/lib/auth';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Sparkle } from '@phosphor-icons/react';
@@ -39,16 +39,6 @@ const providers: {
     ),
     className: 'bg-muted/40 border-border/60 dark:border-border/40 focus-visible:ring-primary/40 hover:bg-muted/60 hover:border-border',
   },
-  {
-    id: 'linkedin',
-    name: 'LinkedIn',
-    renderIcon: () => (
-      <div className="w-8 h-8 flex items-center justify-center shrink-0">
-        <div className="w-[21px] h-[21px] rounded-[5px] bg-gradient-to-br from-blue-300 via-blue-500 to-blue-700 shadow-xs shadow-blue-500/20" />
-      </div>
-    ),
-    className: 'bg-muted/40 border-border/60 dark:border-border/40 focus-visible:ring-primary/40 hover:bg-muted/60 hover:border-border',
-  },
 ];
 
 export function LoginDialog({ open, onOpenChange, onLogin }: LoginDialogProps) {
@@ -57,12 +47,22 @@ export function LoginDialog({ open, onOpenChange, onLogin }: LoginDialogProps) {
   const handleLogin = async (provider: AuthProvider) => {
     setLoading(provider);
     try {
-      const user = await simulateOAuthLogin(provider);
+      let user: User;
+      if (provider === 'google') {
+        user = await signInWithGoogle();
+      } else {
+        user = await signInWithFacebook();
+      }
       onLogin(user);
       onOpenChange(false);
       toast.success(`Welcome, ${user.name}!`);
-    } catch (error) {
-      toast.error('Login failed. Please try again.');
+    } catch (error: unknown) {
+      const code = (error as { code?: string })?.code;
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+        // User dismissed the popup – no error toast needed
+      } else {
+        toast.error('Login failed. Please try again.');
+      }
     } finally {
       setLoading(null);
     }
