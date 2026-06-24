@@ -1,14 +1,13 @@
 import { auth } from '@/config/firebase';
 import {
   GoogleAuthProvider,
-  FacebookAuthProvider,
   signInWithPopup,
   signOut,
   onAuthStateChanged,
   User as FirebaseUser,
 } from 'firebase/auth';
 
-export type AuthProvider = 'google' | 'facebook';
+export type AuthProvider = 'google';
 
 export interface User {
   id: string;
@@ -37,12 +36,6 @@ export async function signInWithGoogle(): Promise<User> {
   return mapFirebaseUser(result.user, 'google');
 }
 
-export async function signInWithFacebook(): Promise<User> {
-  const provider = new FacebookAuthProvider();
-  const result = await signInWithPopup(auth, provider);
-  return mapFirebaseUser(result.user, 'facebook');
-}
-
 export async function signOutUser(): Promise<void> {
   return signOut(auth);
 }
@@ -60,7 +53,6 @@ export function subscribeToAuthChanges(callback: (user: User | null) => void): (
     }
     const supportedProviders: Record<string, AuthProvider> = {
       'google.com': 'google',
-      'facebook.com': 'facebook',
     };
     const matchedEntry = providerData
       .map((pd) => supportedProviders[pd.providerId])
